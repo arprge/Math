@@ -21,3 +21,6 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Vendored OCR models (~12.7 MB) — run `npm run fetch-models` after cloning
+src/scan/models/

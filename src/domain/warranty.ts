@@ -80,3 +80,30 @@ export function coveredValue(enriched: EnrichedItem[]): number {
     .filter((entry) => entry.status !== "expired")
     .reduce((total, entry) => total + entry.it.price, 0)
 }
+
+export type MonthGroup = { key: string; label: string; entries: EnrichedItem[] }
+
+/** Group entries by purchase month, newest month (and newest item) first. */
+export function groupByMonth(enriched: EnrichedItem[]): MonthGroup[] {
+  const sorted = [...enriched].sort((a, b) =>
+    b.it.purchaseDate.localeCompare(a.it.purchaseDate),
+  )
+  const groups: MonthGroup[] = []
+  for (const entry of sorted) {
+    const d = new Date(entry.it.purchaseDate)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+    let g = groups[groups.length - 1]
+    if (!g || g.key !== key) {
+      g = {
+        key,
+        label: d
+          .toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+          .toUpperCase(),
+        entries: [],
+      }
+      groups.push(g)
+    }
+    g.entries.push(entry)
+  }
+  return groups
+}

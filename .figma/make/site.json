@@ -1,0 +1,10 @@
+{
+  "description": "Effortlessly track warranties and expiration dates for your products, ensuring you never miss a claim deadline and maximize your purchase value.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

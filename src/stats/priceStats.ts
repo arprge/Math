@@ -3,7 +3,7 @@
 import type { WarrantyItem } from "../domain/warranty"
 import type { StatModule } from "./types"
 
-export type PriceStats<T = unknown,> = {
+export type PriceStats<T = unknown> = {
   median: number
   q1: number
   q3: number
@@ -32,7 +32,7 @@ export function quantile(sorted: number[], p: number): number {
  * price outliers can be reported back as the original objects.
  */
 export function computePriceStats<T>(
-  covered: { price: number status: string item: T }[],
+  covered: { price: number; status: string; item: T }[],
 ): PriceStats<T> {
   const prices = covered.map((e) => e.price).sort((a, b) => a - b)
   const median = quantile(prices, 0.5)

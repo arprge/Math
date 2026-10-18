@@ -15,8 +15,3 @@ export {
   type RiskLevel,
   type WarrantyRisk,
 } from "./riskStats"
-export {
-  monthlyRiskStat,
-  computeMonthlyRisk,
-  type MonthlyRiskStats,
-} from "./monthlyRiskStats"

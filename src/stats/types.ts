@@ -17,7 +17,7 @@ export type StatContext = {
  * calls `compute(ctx)` and renders the typed result. This is the seam
  * that keeps adding statistics a one-file change.
  */
-export type StatModule<T,> = {
+export type StatModule<T> = {
   /** Stable identifier, e.g. "price-cover". */
   id: string
   /** Human label for headers/menus. */
