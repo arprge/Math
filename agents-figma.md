@@ -1,14 +1,18 @@
 # agents-figma.md — Port plan: align local codebase with the upstream Figma Make
 
 
-> Status: **All phases complete (1–7)** — the local repo mirrors the upstream Figma Make
-> app: design tokens/animations, async repository, three-language i18n (EN/RU/KK),
-> slim `App` shell + extracted `src/components/` and `src/pages/`, the Receipt Archive,
-> and the full on-device OCR scanner (PP-OCRv5 via `onnxruntime-web`, WebGPU with WASM
-> fallback, models vendored). The legacy `monthlyRiskStats` module/export was deleted.
-> Verified with `npx tsc --noEmit` (clean), `npm run build` (clean, both `.onnx` models
-> emitted), and a `npm run dev` smoke test (metadata + `robots.txt` middleware work).
-> Remaining: none — future work is upstream drift only.
+> Status: **Port complete — all phases (1–7) done, verified and committed** (`2fdc9bd`).
+> The local repo mirrors the upstream Figma Make app: design tokens/animations, async
+> repository layer, three-language i18n (EN/RU/KK), slim `App` shell with extracted
+> `src/components/*` + `src/pages/{Register,Archive}`, and the full on-device OCR scanner
+> (PP-OCRv5 via `onnxruntime-web`, WebGPU with WASM fallback, in a Web Worker). The legacy
+> `monthlyRiskStats` module/export was deleted; `StatusDot` is reused by the Archive page.
+> The two `.onnx` models are **gitignored** and restored with `npm run fetch-models`.
+> Verified: `npx tsc --noEmit` clean, `npm run build` clean (both `.onnx` emitted at exact
+> size), `npm run dev` smoke test OK (site metadata + `robots.txt` middleware), and every
+> ported file compared against its upstream source URI (see §8). A pre-existing repo-wide
+> semicolon-strip from a `2026-09-29` formatter run was found and repaired (see §8 / §9).
+> Remaining: only the **interactive QA matrix in §8** (needs a real browser) — no code work.
 - ## Update "Status" line above each time you complete task so other agents will know where we left off
 > Canonical action target is the local repo `/home/nkaet/Documents/University/Projects/Math`.
 > Upstream source of truth: Figma Make `Warranty-tracker-app`
@@ -167,7 +171,7 @@ paths **byte-identical** to upstream while moving them. Do **not** introduce a c
 | D4 | Vendor models? | **Downloaded into `src/scan/models/` locally, gitignored**; `npm run fetch-models` restores them | Reproducible builds without 12.7 MB of binaries in git; HF fallback already coded |
 | D5 | `monthlyRiskStats` | **Remove** (UI + module) | Upstream dropped the monthly band |
 | D6 | `StateDemo` / `dev/` | **Port, marked `DEMO`** | Cheap; makes async states verifiable |
-| D7 | Version control | **`git init` + branch before porting** | Repo is not a git repo → no safety net |
+| D7 | Version control | **Commit per phase** (baseline `9c0875b`; port landed as `2fdc9bd`); OCR models stay untracked | Repo is git-tracked with a pre-migration baseline, so the port is reviewable phase by phase |
 
 ---
 
@@ -344,9 +348,20 @@ recognition charset, and consider language-aware `parseReceipt` dictionaries.
   middleware, and `/src/main.tsx` transforms (200).
 - ✅ Byte-for-byte comparison of ported files against the upstream source URIs (UTF-8 length
   match, e.g. `src/index.css` 7216, `src/lib/format.ts` 1861, `src/domain/repo.ts` 2188,
-  `src/domain/warranty.ts` 2939, `src/pages/Archive.tsx` 27831, `src/scan/RegisterDialog.tsx`
-  28084). `src/stats/{priceStats,riskStats,types}.ts` match upstream exactly (1840 / 2574 / 846)
-  after repairing a pre-existing bulk semicolon-strip that had corrupted them.
+  `src/domain/warranty.ts` 2939, `src/pages/Archive.tsx` 27678 after the `StatusDot` reuse,
+  `src/scan/RegisterDialog.tsx` 28084, `src/dev/StateDemo.tsx` 3057). `src/stats/{priceStats,
+  riskStats,types}.ts` match upstream exactly (1840 / 2574 / 846).
+- ✅ **Extraction fidelity:** the whole upstream `App.tsx` (34 245 UTF-8 bytes) was re-read in
+  non-truncated slices and compared line-by-line with `src/App.tsx`, `src/pages/Register.tsx`
+  and every `src/components/*` file — markup, class strings, SVG paths and i18n keys are
+  identical; only the §3.1 module boundaries, prop wiring, `export default` and indentation
+  differ (`RegisterSkeleton` inlines `viewMode: "list" | "receipts"` to avoid an import cycle).
+- ✅ **Repair of pre-existing corruption:** a `2026-09-29` bulk formatting pass had stripped `;`
+  separators inside inline type literals across `node_modules/**/*.d.ts` and three `src/stats`
+  files, breaking `tsc` with `TS1005`. `node_modules` was reinstalled and the three files
+  restored from upstream byte-exact; the hazard is documented in `CLAUDE.md` §9.
+- ✅ `npm run fetch-models` — downloads/validates the gitignored models (size + sha256);
+  `-- --check` verifies without downloading.
 - ⚠️ **Not performed:** the interactive manual matrix below (no browser/display in the agent
   environment) — run it before shipping.
 
@@ -374,13 +389,14 @@ leftover English literals in touched TSX.
 
 | Risk | Mitigation |
 |---|---|
-| No VCS → destructive port | `git init` + baseline commit before any change (D7) |
+| No VCS → destructive port | ✅ Resolved: repo is git; baseline `9c0875b`, port committed as `2fdc9bd` (D7) |
 | i18n volume (~150 keys × 3) | Port upstream ru/kk verbatim; `satisfies Dict` catches gaps at compile time |
 | Model size (~12.7 MB) in repo | **Resolved:** models are gitignored and restored with `npm run fetch-models` (verifies size + sha256); worker keeps the HF mirror as fallback |
 | WebGPU/crossOriginIsolated unavailable in Figma hosting | Already handled: WASM fallback, `numThreads=1` when not isolated |
 | OCR can’t read RU/KK text | §6.2 option **A**, gated on “if needed” |
 | `vite.config.ts` plugin registration changes dev behavior | Port exactly; verify dev overlay/HMR + `/.figma/make/kit.html` route |
-| `dist/` drift | Rebuild at end (Phase 7) |
+| `dist/` drift | ✅ Rebuilt at end of Phase 7 (`npm run build`; `dist/` is gitignored) |
+| Repo-wide formatter run mangles files — a `2026-09-29` pass stripped `;` in inline type literals across `node_modules/**/*.d.ts` + 3 `src/stats` files (`TS1005`) | **Repaired** (reinstall + restore from upstream). Format **only changed files**, never `node_modules`; always re-run `npx tsc --noEmit` after `npm run format`. Hazard documented in `CLAUDE.md` §9 |
 
 ---
 
