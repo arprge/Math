@@ -1,0 +1,11 @@
+{
+    "chat.mcp.serverSampling": {
+        "Math/.vscode/mcp.json: figma": {
+            "allowedModels": [
+                "copilotcli/auto",
+                "copilot/auto",
+                "agent-host-copilotcli:auto"
+            ]
+        }
+    }
+}

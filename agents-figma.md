@@ -1,6 +1,6 @@
 # agents-figma.md — Port plan: align local codebase with the upstream Figma Make
 
-> Status: **PLAN** (not yet executed). Written in Plan mode.
+> Status: *update this section each time you make huge codebase changes, so other agents would know our progress on executing this plan
 > Canonical action target is the local repo `/home/nkaet/Documents/University/Projects/Math`.
 > Upstream source of truth: Figma Make `Warranty-tracker-app`
 > (`https://www.figma.com/make/csyBeQ21GnrycKRpxlwV47/Warranty-tracker-app`).
@@ -163,11 +163,6 @@ paths **byte-identical** to upstream while moving them. Do **not** introduce a c
 ---
 
 ## 5. Phased implementation plan
-
-### Phase 0 — Guardrails
-1. `git init` (repo currently has **no VCS**) and commit the current state as a baseline.
-2. Snapshot `src/` (or rely on the baseline commit).
-3. Add `onnxruntime-web` to `package.json` only in Phase 5 (keep earlier phases installable).
 
 ### Phase 1 — Foundations (no UI change yet)
 Files: `src/index.css`, `src/domain/warranty.ts`, `src/domain/repo.ts`, `src/lib/format.ts`,
@@ -411,3 +406,4 @@ Source URIs are `file://figma/make/source/csyBeQ21GnrycKRpxlwV47/<path>`.
 - [ ] `src/scan/models/*.onnx` — add *(optional)*
 - [ ] `CLAUDE.md` — update to new architecture
 - [ ] `dist/` — rebuild
+
