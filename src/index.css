@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Archivo', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Just-warm paper: a near-white earth tint, perceptible only beside pure white. */
+  --color-paper: #fbfaf7;
+  --color-ink: #25262a;
+  /* near-neutral dark, softer than pure black */
+  --color-line: #e9e5dc;
+  /* Bright, lively foregrounds — light and vivid, still readable on white. */
+  --color-muted: #73757c;
+  --color-signal: #db4433;
+  /* bright rust red */
+  --color-warn: #d97706;
+  /* clear, vivid orange-amber for expiring cover */
+  --color-ok: #2f9464;
+  /* fresh, bright green */
+  --color-receipt: #fffefa;
+
+  /* A whisper of ochre structure gives the white field a dry, tactile warmth. */
+  --grid-line: rgba(125, 101, 53, 0.028);
+  --grid-size: 26px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+
+  /* A warm lift over a near-white sheet, with texture only at close range. */
+  background-color: var(--color-paper);
+  background-image:
+    radial-gradient(120% 90% at 20% -10%,
+      rgba(255, 253, 245, 0.78) 0%,
+      rgba(255, 253, 245, 0) 60%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size);
+  background-position:
+    0 0,
+    0 0,
+    0 0;
+  background-attachment: fixed;
+}
+
+::selection {
+  background: var(--color-signal);
+  color: #fff;
+}
+
+/* Hide scrollbars until scrolling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: var(--color-line) transparent;
+}
+
+/* Receipt card — depth comes from a lit edge and a close contact shadow. */
+.receipt-card {
+  /* Min height keeps cards from collapsing; card grows to fit its content. */
+  min-height: clamp(28rem, 42vw, 32rem);
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 0 0 1px rgba(122, 101, 58, 0.055),
+    0 1px 0 rgba(27, 42, 56, 0.11),
+    0 4px 9px rgba(27, 42, 56, 0.045);
+  transition: box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.receipt-card:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 0 0 1px rgba(122, 101, 58, 0.075),
+    0 1px 0 rgba(27, 42, 56, 0.12),
+    0 7px 14px rgba(27, 42, 56, 0.065);
+  transform: translateY(-2px);
+}
+
+.receipt-product {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Perforated tear-away strips — circles punch through to page background */
+.receipt-perf-top {
+  height: 13px;
+  background-color: var(--color-receipt);
+  background-image: radial-gradient(circle at 50% 100%,
+      transparent 6.5px,
+      var(--color-receipt) 6.5px);
+  background-size: 20px 13px;
+  background-repeat: repeat-x;
+}
+
+.receipt-perf-bottom {
+  height: 13px;
+  background-color: var(--color-receipt);
+  background-image: radial-gradient(circle at 50% 0%,
+      transparent 6.5px,
+      var(--color-receipt) 6.5px);
+  background-size: 20px 13px;
+  background-repeat: repeat-x;
+}
+
+/* Value-covered breakdown popover entrance */
+@keyframes moneyPop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Dashed separator line inside receipts */
+.receipt-dash {
+  height: 1px;
+  background-image: repeating-linear-gradient(to right,
+      var(--color-line) 0px,
+      var(--color-line) 6px,
+      transparent 6px,
+      transparent 10px);
+}
