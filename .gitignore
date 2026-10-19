@@ -24,3 +24,6 @@ pnpm-debug.log*
 
 # Vendored OCR models (~12.7 MB) — run `npm run fetch-models` after cloning
 src/scan/models/
+
+# QA screenshots (qa/playwright-qa.mjs output)
+qa/shots/

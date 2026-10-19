@@ -1,7 +1,8 @@
 # agents-figma.md — Port plan: align local codebase with the upstream Figma Make
 
 
-> Status: **Port complete — all phases (1–7) done, verified and committed** (`2fdc9bd`).
+> Status: **Port complete — all phases (1–7) done, verified and committed** (`2fdc9bd`),
+> **plus the §8 QA matrix executed** (`qa/playwright-qa.mjs`, 30/30 checks green).
 > The local repo mirrors the upstream Figma Make app: design tokens/animations, async
 > repository layer, three-language i18n (EN/RU/KK), slim `App` shell with extracted
 > `src/components/*` + `src/pages/{Register,Archive}`, and the full on-device OCR scanner
@@ -9,10 +10,15 @@
 > `monthlyRiskStats` module/export was deleted; `StatusDot` is reused by the Archive page.
 > The two `.onnx` models are **gitignored** and restored with `npm run fetch-models`.
 > Verified: `npx tsc --noEmit` clean, `npm run build` clean (both `.onnx` emitted at exact
-> size), `npm run dev` smoke test OK (site metadata + `robots.txt` middleware), and every
-> ported file compared against its upstream source URI (see §8). A pre-existing repo-wide
-> semicolon-strip from a `2026-09-29` formatter run was found and repaired (see §8 / §9).
-> Remaining: only the **interactive QA matrix in §8** (needs a real browser) — no code work.
+> size), `npm run dev` smoke test OK (site metadata + `robots.txt` middleware), every
+> ported file byte-compared against its upstream source URI (see §8), the upstream
+> `plans/*.md` design docs mirrored into `plans/`, and a headless-Chromium pass over the
+> whole §8 matrix (register, archive, drawer, closet paging, i18n, responsive overflow,
+> DEMO fault injection, and the full OCR flow — upload, paste, fake camera, retake, save,
+> save-failure). A pre-existing repo-wide semicolon-strip from a `2026-09-29` formatter run
+> was found and repaired (see §8 / §9).
+> Remaining: **no code work** — only an optional human pass for visual polish on real
+> hardware (a physical phone camera and a human eye) which the automated matrix cannot judge.
 - ## Update "Status" line above each time you complete task so other agents will know where we left off
 > Canonical action target is the local repo `/home/nkaet/Documents/University/Projects/Math`.
 > Upstream source of truth: Figma Make `Warranty-tracker-app`
@@ -81,6 +87,7 @@ pull the same model from its HuggingFace source (see §6).
 | `src/scan/` | **absent** | engine, ocr, ocr.worker, parseReceipt, dict, RegisterDialog, **2 × .onnx** | add (optional) |
 | `src/dev/StateDemo.tsx` | **absent** | fault-injection dev menu (marked `DEMO`) | add |
 | `src/main.tsx` | bare `<App/>` | wrapped in `<I18nProvider>` | edit |
+| `plans/*.md` | **absent** | 5 upstream design docs (archive-boxes, encapsulated-herding-crown, i-ve-restored-to-a-shiny-wren, language-switcher, receipt-archive) | port verbatim |
 | `CLAUDE.md` (this repo) | written for old state | — | update after port |
 
 ---
@@ -362,11 +369,44 @@ recognition charset, and consider language-aware `parseReceipt` dictionaries.
   restored from upstream byte-exact; the hazard is documented in `CLAUDE.md` §9.
 - ✅ `npm run fetch-models` — downloads/validates the gitignored models (size + sha256);
   `-- --check` verifies without downloading.
-- ⚠️ **Not performed:** the interactive manual matrix below (no browser/display in the agent
-  environment) — run it before shipping.
+- ✅ **Upstream re-verification (2026-10-19):** every upstream source file in the Make
+  manifest was re-read through the MCP resource API and hash-compared (FNV-1a/64) with the
+  local file. **30 of 31 are byte-identical** (`src/main.tsx`, `src/index.css`,
+  `src/i18n/**`, `src/lib/format.ts`, `src/domain/**`, `src/stats/**`, `src/scan/**`,
+  `src/dev/StateDemo.tsx`, `vite.config.ts`, `tsconfig.json`, `index.html`, …). The only
+  two differences are the **intentional** refactors: `src/App.tsx` (34 245 B upstream →
+  the slim shell + `src/components/*` + `src/pages/Register.tsx` split) and
+  `src/pages/Archive.tsx` (27 819 B upstream → 27 666 B after the `StatusDot` reuse).
+  `package.json` differs only by the added `fetch-models` script.
+- ✅ **Upstream docs mirrored:** the five upstream `plans/*.md` design documents
+  (`archive-boxes`, `encapsulated-herding-crown`, `i-ve-restored-to-a-shiny-wren`,
+  `language-switcher`, `receipt-archive`) were ported verbatim into `plans/` and are
+  hash-identical to upstream. (Upstream also lists `plans/async-states.md`, but that file
+  does not exist upstream — the resource returns "not found" — so it was not ported.)
+
+**QA matrix executed (`qa/playwright-qa.mjs`, headless Chromium 156, dev server on
+`:8443`) — 30/30 checks green:**
+
+| Area | Checks | Result |
+|---|---|---|
+| Register | skeleton → ready, no `NaN`/`undefined` in copy, stat band values (`6 │ 2 │ 3 │ £5,471`), Value-covered popover opens/closes, all four filters (`6/2/3/1`), list ↔ receipts toggle, risk-flag reveal on hover (`max-height 0px → 64px`), empty state for a filter with no matches | ✅ 8/8 |
+| Archive | tab switch + shelf/ledger render, search → no-match state → clear, `ALL 6 / FILED 5 / MISSING 1` counts, row → drawer, `Esc` closes, arrow-key row navigation, `Ctrl/⌘-K` focuses search, closet arrows page to the 2020 shelf (5-year dataset), mobile preview is a bottom sheet with a scrim (drawer at `y=508` in an 800 px viewport) | ✅ 9/9 |
+| i18n | EN/RU/KZ switch with `<html lang>` updates, Cyrillic present, choice persists across reload, `ru-RU` browser locale auto-detected, RU copy has no overflow at 375 px, the scan dialog renders in Russian | ✅ 6/6 |
+| Responsive | no horizontal overflow at 320 / 375 / 768 / 1280 (every element's box checked) | ✅ 1/1 |
+| States | DEMO "Load error" → voided-slip alert + recovery after clearing the fault | ✅ 1/1 |
+| Scan (real on-device OCR) | choose step, **file upload → OCR → review form** (read `X200`, `2026-09-12`, `24`, `349`, `BLUE STORE WASHING MACHINE` from a synthetic receipt), retake returns to choose, **save → 7 cards + `print-in` + header `FILED · 7 ON RECORD`**, clipboard paste starts a scan, camera view with a fake capture device, save failure shows the error notice + retry | ✅ 5/5 |
+
+Only remaining console noise is the browser's automatic `/favicon.ico` request (404) —
+upstream's `index.html` declares no favicon either, so this matches upstream exactly.
 
 **Static:** `npx tsc --noEmit` clean; `npm run build` succeeds; no stray Figma URLs; rgrep for
 leftover English literals in touched TSX.
+
+**Still worth a human pass (not automatable):**
+- Visual polish judgement (spacing/typography on a real screen) and a **physical phone
+  camera** — the camera flow was exercised with Chromium's fake capture device only.
+- Real-world receipts (skewed, glossy, multi-column) for the OCR accuracy question in §6.2
+  option **A** (RU/KK receipts are still unreadable by the English-only recognition model).
 
 **Manual (dev server, `PORT`/`8443`):**
 - **Register:** loading skeleton → ready; load-error → retry; list + receipt views; all four
@@ -448,5 +488,7 @@ Source URIs are `file://figma/make/source/csyBeQ21GnrycKRpxlwV47/<path>`.
 - [x] `src/scan/dict.ts` — add *(optional)*
 - [x] `src/scan/RegisterDialog.tsx` — add *(optional)*
 - [x] `src/scan/models/*.onnx` — gitignored; restored via `npm run fetch-models` *(optional)*
+- [x] `plans/{archive-boxes,encapsulated-herding-crown,i-ve-restored-to-a-shiny-wren,language-switcher,receipt-archive}.md` — upstream design docs, ported verbatim
 - [x] `CLAUDE.md` — update to new architecture
+- [x] `qa/playwright-qa.mjs` — automated §8 QA matrix (headless Chromium, 30 checks)
 - [x] `dist/` — rebuild

@@ -11,8 +11,10 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 >
 > **This repo mirrors the current Figma Make upstream** (`Warranty-tracker-app`,
 > file key `csyBeQ21GnrycKRpxlwV47`). The port plan lives in
-> [`agents-figma.md`](agents-figma.md); its phases are complete. Upstream is the
-> source of truth — prefer upstream file contents verbatim over local rewrites.
+> [`agents-figma.md`](agents-figma.md); its phases are complete and the §8 QA matrix
+> passes (30/30 checks via `qa/playwright-qa.mjs`). Upstream is the source of truth —
+> prefer upstream file contents verbatim over local rewrites. Upstream's own design
+> documents are mirrored in [`plans/`](plans).
 
 ---
 
@@ -35,6 +37,7 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 | Icons | None — inline SVG + Unicode glyphs only |
 | Assets | Google Fonts CDN; two `.onnx` models in `src/scan/models/` (gitignored — run `npm run fetch-models`) |
 | Alias | `@/*` → `./src/*` (configured in `tsconfig.json` + `vite.config.ts`; source uses relative imports) |
+| QA | `node qa/playwright-qa.mjs` — headless-Chromium pass over the §8 matrix (Playwright is **not** a project dep) |
 
 **Golden rules for agents**
 
@@ -289,6 +292,25 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
   intent (hover/focus of Register) or on open, and pre-warms the reader.
 - Keep the pipeline client-side; do not move inference to a server.
 
+### 3.6 QA harness (headless Chromium)
+
+- [`qa/playwright-qa.mjs`](qa/playwright-qa.mjs) is a **standalone script** (no project
+  dependency) that drives the whole app in a headless Chromium and asserts the QA
+  matrix in [`agents-figma.md`](agents-figma.md) §8: register states/filters/views,
+  archive ledger/drawer/closet paging, EN/RU/KZ switching and persistence, responsive
+  overflow, the DEMO fault injector, and the real on-device OCR flow (upload → review →
+  save, clipboard paste, camera with a fake device, retake, save failure).
+- It renders its own synthetic receipt with the browser, so there are no binary
+  fixtures; screenshots land in `qa/shots/` (gitignored).
+- Run it with the dev server up:
+  ```bash
+  npm run dev                       # terminal 1
+  npx playwright install chromium   # once
+  node qa/playwright-qa.mjs         # terminal 2 → 30 checks
+  ```
+- Playwright is **not** in `package.json` on purpose — it resolves a global install at
+  runtime. Do not add it as a dependency; do not commit `qa/shots/`.
+
 ---
 
 ## 4. Asset Management
@@ -388,6 +410,9 @@ Math/                         # repo root (git repo)
 ├── .vscode/mcp.json          # Figma MCP server registration (HTTP)
 ├── .figma/make/site.json     # site metadata applied to the HTML shell
 ├── agents-figma.md           # port plan + phase log against the Figma Make upstream
+├── plans/                    # upstream Figma Make design docs (ported verbatim)
+├── qa/
+│   └── playwright-qa.mjs     # automated §8 QA matrix (headless Chromium; not a dep)
 ├── dist/                     # build output (generated; do not hand-edit)
 ├── ipynb/                    # unrelated Kazakh statistics coursework (ignore)
 └── src/
