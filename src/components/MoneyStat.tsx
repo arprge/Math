@@ -13,7 +13,7 @@ export default function MoneyStat({
 }) {
   const { t, fmt } = useI18n()
   const [open, setOpen] = useState(false)
-  const highRisk = stats.p >= 0.5
+  const highRisk = stats.clusterP >= 0.5
 
   return (
     <div className="relative border-r border-b border-line">
@@ -28,9 +28,8 @@ export default function MoneyStat({
             {t("stats.value")}
           </span>
           <span
-            className={`inline-block font-mono text-[9px] leading-none text-muted opacity-40 transition-all group-hover:opacity-90 ${
-              open ? "rotate-180" : "rotate-90"
-            }`}
+            className={`inline-block font-mono text-[9px] leading-none text-muted opacity-40 transition-all group-hover:opacity-90 ${open ? "rotate-180" : "rotate-90"
+              }`}
           >
             &gt;
           </span>
@@ -105,6 +104,10 @@ export default function MoneyStat({
                     )}
                   </dd>
                 </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-muted">{t("breakdown.soonValue")}</dt>
+                  <dd className="tabular-nums text-ink">{fmt.money(stats.soonValue)}</dd>
+                </div>
               </dl>
 
               <div className="receipt-dash my-3" />
@@ -112,16 +115,14 @@ export default function MoneyStat({
               {/* Cash-gap risk — the urgency line */}
               <div className="flex items-start gap-2">
                 <span
-                  className={`mt-[3px] h-2 w-2 shrink-0 ${
-                    highRisk ? "bg-signal" : "bg-ok"
-                  }`}
+                  className={`mt-[3px] h-2 w-2 shrink-0 ${highRisk ? "bg-signal" : "bg-ok"
+                    }`}
                   aria-hidden
                 />
                 <div className="min-w-0">
                   <div
-                    className={`font-mono text-[11px] font-bold leading-snug ${
-                      highRisk ? "text-signal" : "text-ink"
-                    }`}
+                    className={`font-mono text-[11px] font-bold leading-snug ${highRisk ? "text-signal" : "text-ink"
+                      }`}
                   >
                     {t("breakdown.cashGap", { pct: Math.round(stats.p * 100) })}
                   </div>
@@ -129,7 +130,7 @@ export default function MoneyStat({
                     {t("breakdown.cashGapDetail", {
                       soon: stats.soon,
                       n: stats.n,
-                      p: fmt.number(stats.p, 2),
+                      p: fmt.number(stats.clusterP, 2),
                     })}
                   </div>
                 </div>

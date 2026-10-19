@@ -30,8 +30,9 @@ const en = {
     outliers: "Price outliers",
     none: "None",
     above: "{count} above {fence}",
+    soonValue: "Value expiring soon",
     cashGap: "Cash-gap risk · {pct}%",
-    cashGapDetail: "{soon}/{n} items expire soon. Group-expiry probability P={p}.",
+    cashGapDetail: "{soon}/{n} items expire soon. Probability of 2+ expiring P={p}.",
   },
   filter: { all: "all", active: "active", soon: "soon", expired: "expired" },
   controls: {
@@ -207,10 +208,10 @@ const en = {
 type Widen<T> = T extends string
   ? string
   : T extends Plural
-    ? Plural
-    : T extends readonly string[]
-      ? readonly string[]
-      : { [K in keyof T]: Widen<T[K]> }
+  ? Plural
+  : T extends readonly string[]
+  ? readonly string[]
+  : { [K in keyof T]: Widen<T[K]> }
 
 export type Dict = Widen<typeof en>
 export default en as Dict

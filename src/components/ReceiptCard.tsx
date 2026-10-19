@@ -1,3 +1,5 @@
+import { memo } from "react"
+
 import { useI18n } from "../i18n"
 import type { WarrantyItem } from "../domain/warranty"
 import type { WarrantyRisk } from "../stats"
@@ -6,7 +8,7 @@ import StatusDot from "./StatusDot"
 import RiskFlag from "./RiskFlag"
 
 /** One record rendered as a thermal till receipt. */
-export default function ReceiptCard({
+function ReceiptCard({
   it,
   days,
   status,
@@ -64,9 +66,8 @@ export default function ReceiptCard({
 
         {/* Time remaining — hero stat */}
         <div
-          className={`font-mono font-bold text-3xl tracking-tight leading-none mb-2 ${timeColor} ${
-            status === "expired" ? "uppercase" : ""
-          }`}
+          className={`font-mono font-bold text-3xl tracking-tight leading-none mb-2 ${timeColor} ${status === "expired" ? "uppercase" : ""
+            }`}
         >
           {status === "expired" ? t("status.expired") : fmt.left(days)}
         </div>
@@ -145,3 +146,5 @@ export default function ReceiptCard({
     </div>
   )
 }
+
+export default memo(ReceiptCard)

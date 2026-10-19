@@ -1,6 +1,7 @@
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   useEffect,
+  useDeferredValue,
   useMemo,
   useRef,
   useState,
@@ -145,18 +146,16 @@ function ArchiveBox({
       aria-pressed={open}
       aria-label={missingText ? `${summary}, ${missingText}` : summary}
       title={missingText ? `${summary} · ${missingText}` : summary}
-      className={`group relative min-w-0 flex-[0_1_8rem] text-left transition-transform duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink disabled:cursor-default ${
-        active ? "-translate-y-1.5" : "enabled:hover:-translate-y-0.5"
-      } motion-reduce:transform-none`}
+      className={`group relative min-w-0 flex-[0_1_8rem] text-left transition-transform duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink disabled:cursor-default ${active ? "-translate-y-1.5" : "enabled:hover:-translate-y-0.5"
+        } motion-reduce:transform-none`}
     >
       <span aria-hidden className="relative block aspect-[5/4] w-full max-w-40 [container-type:inline-size]">
         <svg viewBox="0 0 100 80" className={`absolute inset-0 h-full w-full overflow-visible text-ink ${count === 0 ? "opacity-45" : ""}`} fill="none" stroke="currentColor" strokeWidth="1" strokeLinejoin="round">
           {/* Open mouth of the box, seen slightly from above. */}
           <path d="M0 38 9 33H95L86 38Z" fill="var(--color-line)" vectorEffect="non-scaling-stroke" />
           <g
-            className={`transition-transform duration-300 ease-out motion-reduce:transition-none ${
-              active ? "-translate-y-[4px]" : "group-enabled:group-hover:-translate-y-[2px]"
-            }`}
+            className={`transition-transform duration-300 ease-out motion-reduce:transition-none ${active ? "-translate-y-[4px]" : "group-enabled:group-hover:-translate-y-[2px]"
+              }`}
           >
             <BoxContents kind={kind} n={Math.max(1, Math.min(count, kind === 1 ? 3 : 4))} />
           </g>
@@ -166,17 +165,15 @@ function ArchiveBox({
           <rect x="0" y="38" width="86" height="42" className={active ? "fill-ink" : "fill-receipt"} vectorEffect="non-scaling-stroke" />
         </svg>
         <span
-          className={`absolute left-0 right-[14%] top-[47.5%] bottom-0 flex flex-col items-center justify-center gap-[2.5cqw] ${
-            active ? "text-paper" : count === 0 ? "text-muted/70" : "text-ink"
-          }`}
+          className={`absolute left-0 right-[14%] top-[47.5%] bottom-0 flex flex-col items-center justify-center gap-[2.5cqw] ${active ? "text-paper" : count === 0 ? "text-muted/70" : "text-ink"
+            }`}
         >
           <span className="font-display font-medium leading-none text-[max(10px,13cqw)]">
             {label.slice(0, 3)}
           </span>
           <span
-            className={`flex items-center gap-[1.5cqw] font-mono leading-none tabular-nums text-[max(8px,7.5cqw)] ${
-              active ? "opacity-70" : "text-muted"
-            }`}
+            className={`flex items-center gap-[1.5cqw] font-mono leading-none tabular-nums text-[max(8px,7.5cqw)] ${active ? "opacity-70" : "text-muted"
+              }`}
           >
             {count === 0 ? "—" : count}
             {missing > 0 && (
@@ -218,9 +215,8 @@ function ClosetArrow({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={`absolute top-1/2 z-10 flex h-16 w-6 -translate-y-1/2 items-center justify-center text-ink opacity-0 transition-opacity duration-200 ease-out group-hover/closet:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ink pointer-coarse:opacity-100 ${
-        dir === "prev" ? "-left-6" : "-right-6"
-      }`}
+      className={`absolute top-1/2 z-10 flex h-16 w-6 -translate-y-1/2 items-center justify-center text-ink opacity-0 transition-opacity duration-200 ease-out group-hover/closet:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ink pointer-coarse:opacity-100 ${dir === "prev" ? "-left-6" : "-right-6"
+        }`}
     >
       <svg aria-hidden viewBox="0 0 12 40" className="h-10 w-3" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
         <path d={dir === "prev" ? "M10 2 2 20l8 18" : "M2 2l8 18-8 18"} />
@@ -244,6 +240,7 @@ export default function ArchivePage({
   const [filter, setFilter] = useState<ArchiveFilter>("all")
   const [openKey, setOpenKey] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const deferredQuery = useDeferredValue(query)
   const rowRefs = useRef(new Map<string, HTMLButtonElement>())
   const boxRefs = useRef(new Map<string, HTMLButtonElement>())
   const searchRef = useRef<HTMLInputElement>(null)
@@ -254,7 +251,7 @@ export default function ArchivePage({
   }, [enriched])
 
   const groups = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = deferredQuery.trim().toLowerCase()
     const matches = enriched.filter((e) => {
       if (filter === "filed" && !e.it.receipt) return false
       if (filter === "missing" && e.it.receipt) return false
@@ -265,7 +262,7 @@ export default function ArchivePage({
       )
     })
     return groupByMonth(matches)
-  }, [enriched, query, filter])
+  }, [enriched, deferredQuery, filter])
 
   const byKey = useMemo(() => new Map(groups.map((g) => [g.key, g])), [groups])
 
@@ -414,19 +411,17 @@ export default function ArchivePage({
                     onClick={() => setFilter(f)}
                     disabled={!ready}
                     aria-pressed={active}
-                    className={`whitespace-nowrap border-b pb-0.5 transition-colors ${
-                      active
+                    className={`whitespace-nowrap border-b pb-0.5 transition-colors ${active
                         ? "border-ink text-ink"
                         : "border-transparent text-muted hover:text-ink"
-                    }`}
+                      }`}
                   >
                     {t(`archive.filter.${f}`)}{" "}
                     <span
-                      className={`tabular-nums ${
-                        ready && f === "missing" && counts.missing > 0
+                      className={`tabular-nums ${ready && f === "missing" && counts.missing > 0
                           ? "text-signal"
                           : "opacity-60"
-                      }`}
+                        }`}
                     >
                       {ready ? counts[f] : "–"}
                     </span>
@@ -440,199 +435,195 @@ export default function ArchivePage({
 
       {/* The shelf unit: double frame, one compartment per year. */}
       <div className="grid items-start gap-10 xl:grid-cols-[minmax(0,48rem)_minmax(18rem,1fr)]">
-      <div className="group/closet relative mx-auto w-full max-w-[48rem]">
-      {safePage > 0 && (
-        <ClosetArrow dir="prev" label={t("archive.newer", { years: yearsOn(safePage - 1) })} onClick={() => turnPage(safePage - 1)} />
-      )}
-      {safePage < pages - 1 && (
-        <ClosetArrow dir="next" label={t("archive.older", { years: yearsOn(safePage + 1) })} onClick={() => turnPage(safePage + 1)} />
-      )}
-      <div
-        className={`border border-ink p-1.5 ${
-          load.status === "loading" ? "skeleton-pulse" : ""
-        }`}
-      >
-        <div
-          className="border border-ink"
-          role="group"
-          aria-label={t("archive.shelves")}
-          onKeyDown={onShelfKey}
-        >
-          {visibleShelves.map((s, si) => (
-            <section
-              key={s.year}
-              aria-label={t("archive.shelf", { year: s.year })}
-              className="relative pb-3"
-            >
-              <Compartment first={si === 0} />
-              <ShelfBoard />
-              <div
-                className={`relative flex min-h-[9.5rem] items-end justify-center gap-1 px-[11%] pb-0 sm:gap-3 ${
-                  si === 0 ? "pt-12" : "pt-7"
-                }`}
-              >
-                <span className="absolute top-2 left-[11%] font-mono text-[10px] tracking-[0.2em] text-muted tabular-nums sm:left-[calc(9%+0.6rem)]">
-                  {s.year}
-                </span>
-                {s.keys.map((key, ki) => {
-                  const g = byKey.get(key)
-                  return (
-                    <ArchiveBox
-                      key={key}
-                      label={label(key)}
-                      count={g?.entries.length ?? 0}
-                      missing={
-                        g?.entries.filter((e) => !e.it.receipt).length ?? 0
-                      }
-                      open={key === activeKey}
-                      variant={ki}
-                      onOpen={() => {
-                        setOpenKey(key)
-                        setSelectedId(null)
-                      }}
-                      boxRef={(el) => {
-                        if (el) boxRefs.current.set(key, el)
-                        else boxRefs.current.delete(key)
-                      }}
-                    />
-                  )
-                })}
-              </div>
-            </section>
-          ))}
-          {Array.from({ length: PER_CLOSET - visibleShelves.length }).map(
-            (_, k) => (
-              <section
-                key={`empty-${k}`}
-                aria-hidden
-                className="relative min-h-[9.5rem] pb-3"
-              >
-                <Compartment first={visibleShelves.length + k === 0} />
-                <ShelfBoard />
-              </section>
-            ),
+        <div className="group/closet relative mx-auto w-full max-w-[48rem]">
+          {safePage > 0 && (
+            <ClosetArrow dir="prev" label={t("archive.newer", { years: yearsOn(safePage - 1) })} onClick={() => turnPage(safePage - 1)} />
           )}
+          {safePage < pages - 1 && (
+            <ClosetArrow dir="next" label={t("archive.older", { years: yearsOn(safePage + 1) })} onClick={() => turnPage(safePage + 1)} />
+          )}
+          <div
+            className={`border border-ink p-1.5 ${load.status === "loading" ? "skeleton-pulse" : ""
+              }`}
+          >
+            <div
+              className="border border-ink"
+              role="group"
+              aria-label={t("archive.shelves")}
+              onKeyDown={onShelfKey}
+            >
+              {visibleShelves.map((s, si) => (
+                <section
+                  key={s.year}
+                  aria-label={t("archive.shelf", { year: s.year })}
+                  className="relative pb-3"
+                >
+                  <Compartment first={si === 0} />
+                  <ShelfBoard />
+                  <div
+                    className={`relative flex min-h-[9.5rem] items-end justify-center gap-1 px-[11%] pb-0 sm:gap-3 ${si === 0 ? "pt-12" : "pt-7"
+                      }`}
+                  >
+                    <span className="absolute top-2 left-[11%] font-mono text-[10px] tracking-[0.2em] text-muted tabular-nums sm:left-[calc(9%+0.6rem)]">
+                      {s.year}
+                    </span>
+                    {s.keys.map((key, ki) => {
+                      const g = byKey.get(key)
+                      return (
+                        <ArchiveBox
+                          key={key}
+                          label={label(key)}
+                          count={g?.entries.length ?? 0}
+                          missing={
+                            g?.entries.filter((e) => !e.it.receipt).length ?? 0
+                          }
+                          open={key === activeKey}
+                          variant={ki}
+                          onOpen={() => {
+                            setOpenKey(key)
+                            setSelectedId(null)
+                          }}
+                          boxRef={(el) => {
+                            if (el) boxRefs.current.set(key, el)
+                            else boxRefs.current.delete(key)
+                          }}
+                        />
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
+              {Array.from({ length: PER_CLOSET - visibleShelves.length }).map(
+                (_, k) => (
+                  <section
+                    key={`empty-${k}`}
+                    aria-hidden
+                    className="relative min-h-[9.5rem] pb-3"
+                  >
+                    <Compartment first={visibleShelves.length + k === 0} />
+                    <ShelfBoard />
+                  </section>
+                ),
+              )}
+            </div>
+          </div>
+
         </div>
-      </div>
 
-      </div>
-
-      {/* Contents of the open box: the ruled ledger. */}
-      <div className="flex min-w-0 items-start gap-8">
-        <section
-          aria-label={
-            open
-              ? t("archive.contentsOf", { label: groupLabel(open.key) })
-              : t("archive.boxContents")
-          }
-          className="min-w-0 flex-1"
-        >
-          {load.status === "loading" ? (
-            <LedgerSkeleton />
-          ) : load.status === "error" ? (
-            <div role="alert" className="border-t border-ink py-8">
-              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-signal">
-                {t("archive.notRead")}
+        {/* Contents of the open box: the ruled ledger. */}
+        <div className="flex min-w-0 items-start gap-8">
+          <section
+            aria-label={
+              open
+                ? t("archive.contentsOf", { label: groupLabel(open.key) })
+                : t("archive.boxContents")
+            }
+            className="min-w-0 flex-1"
+          >
+            {load.status === "loading" ? (
+              <LedgerSkeleton />
+            ) : load.status === "error" ? (
+              <div role="alert" className="border-t border-ink py-8">
+                <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-signal">
+                  {t("archive.notRead")}
+                </div>
+                <p className="mt-2 font-mono text-xs leading-relaxed text-muted">
+                  {fmt.error(load.error)} {t("archive.untouched")}{" "}
+                  <button
+                    onClick={onRetry}
+                    className="border-b border-ink text-ink"
+                  >
+                    {t("states.tryAgain")}
+                  </button>
+                </p>
               </div>
-              <p className="mt-2 font-mono text-xs leading-relaxed text-muted">
-                {fmt.error(load.error)} {t("archive.untouched")}{" "}
+            ) : open ? (
+              <>
+                <div className="flex items-baseline justify-between gap-3 border-b border-ink pb-2">
+                  <h3 className="font-display text-xl font-extrabold tracking-tight">
+                    {groupLabel(open.key)}
+                  </h3>
+                  <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-muted tabular-nums">
+                    {t("archive.inBox", { count: entries.length })}
+                  </span>
+                </div>
+                <ul>
+                  {entries.map((e, index) => {
+                    const active = e.it.id === selectedId
+                    return (
+                      <li key={e.it.id} className="border-b border-line">
+                        <button
+                          ref={(el) => {
+                            if (el) rowRefs.current.set(e.it.id, el)
+                            else rowRefs.current.delete(e.it.id)
+                          }}
+                          onClick={() => setSelectedId(active ? null : e.it.id)}
+                          onKeyDown={(ev) => onRowKey(ev, index)}
+                          aria-pressed={active}
+                          className={`grid w-full grid-cols-[2rem_1fr_auto] items-baseline gap-3 py-3 pr-1 text-left transition-[padding] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:grid-cols-[2.5rem_1fr_auto] sm:gap-5 ${active
+                              ? "pl-3 shadow-[inset_2px_0_0_var(--color-ink)]"
+                              : "pl-0 hover:pl-1.5"
+                            }`}
+                        >
+                          <span className="font-mono text-[11px] tabular-nums text-muted">
+                            {String(
+                              new Date(e.it.purchaseDate).getDate(),
+                            ).padStart(2, "0")}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-display text-base font-bold leading-tight">
+                              {e.it.product}
+                            </span>
+                            <span className="block truncate font-mono text-[10px] text-muted">
+                              {e.it.store} · {fmt.money(e.it.price)}
+                            </span>
+                          </span>
+                          <span
+                            className={`font-mono text-[9px] uppercase tracking-[0.15em] ${e.it.receipt ? "text-muted" : "text-signal"
+                              }`}
+                          >
+                            {e.it.receipt ? t("archive.filed") : t("archive.missing")}
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </>
+            ) : (
+              <p className="border-t border-ink py-10 font-mono text-xs text-muted">
+                {query
+                  ? `${t("archive.nothingFiled", { query })} `
+                  : `${t("archive.noMatch")} `}
                 <button
-                  onClick={onRetry}
+                  onClick={() => {
+                    setQuery("")
+                    setFilter("all")
+                  }}
                   className="border-b border-ink text-ink"
                 >
-                  {t("states.tryAgain")}
+                  {t("archive.clearSearch")}
                 </button>
               </p>
-            </div>
-          ) : open ? (
-            <>
-              <div className="flex items-baseline justify-between gap-3 border-b border-ink pb-2">
-                <h3 className="font-display text-xl font-extrabold tracking-tight">
-                  {groupLabel(open.key)}
-                </h3>
-                <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-muted tabular-nums">
-                  {t("archive.inBox", { count: entries.length })}
-                </span>
-              </div>
-              <ul>
-                {entries.map((e, index) => {
-                  const active = e.it.id === selectedId
-                  return (
-                    <li key={e.it.id} className="border-b border-line">
-                      <button
-                        ref={(el) => {
-                          if (el) rowRefs.current.set(e.it.id, el)
-                          else rowRefs.current.delete(e.it.id)
-                        }}
-                        onClick={() => setSelectedId(active ? null : e.it.id)}
-                        onKeyDown={(ev) => onRowKey(ev, index)}
-                        aria-pressed={active}
-                        className={`grid w-full grid-cols-[2rem_1fr_auto] items-baseline gap-3 py-3 pr-1 text-left transition-[padding] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:grid-cols-[2.5rem_1fr_auto] sm:gap-5 ${
-                          active
-                            ? "pl-3 shadow-[inset_2px_0_0_var(--color-ink)]"
-                            : "pl-0 hover:pl-1.5"
-                        }`}
-                      >
-                        <span className="font-mono text-[11px] tabular-nums text-muted">
-                          {String(
-                            new Date(e.it.purchaseDate).getDate(),
-                          ).padStart(2, "0")}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate font-display text-base font-bold leading-tight">
-                            {e.it.product}
-                          </span>
-                          <span className="block truncate font-mono text-[10px] text-muted">
-                            {e.it.store} · {fmt.money(e.it.price)}
-                          </span>
-                        </span>
-                        <span
-                          className={`font-mono text-[9px] uppercase tracking-[0.15em] ${
-                            e.it.receipt ? "text-muted" : "text-signal"
-                          }`}
-                        >
-                          {e.it.receipt ? t("archive.filed") : t("archive.missing")}
-                        </span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </>
-          ) : (
-            <p className="border-t border-ink py-10 font-mono text-xs text-muted">
-              {query
-                ? `${t("archive.nothingFiled", { query })} `
-                : `${t("archive.noMatch")} `}
-              <button
-                onClick={() => {
-                  setQuery("")
-                  setFilter("all")
-                }}
-                className="border-b border-ink text-ink"
-              >
-                {t("archive.clearSearch")}
-              </button>
-            </p>
-          )}
-        </section>
+            )}
+          </section>
 
-        {selected && (
-          <>
-            <button
-              aria-label={t("archive.closePreview")}
-              onClick={() => setSelectedId(null)}
-              className="fixed inset-0 z-40 bg-ink/30 md:hidden"
-            />
-            <aside
-              aria-label={t("archive.preview")}
-              className="archive-slip fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-auto bg-receipt md:sticky md:top-6 md:inset-auto md:z-auto md:w-72 md:shrink-0 md:max-h-none"
-            >
-              <Preview entry={selected} onClose={() => setSelectedId(null)} />
-            </aside>
-          </>
-        )}
-      </div>
+          {selected && (
+            <>
+              <button
+                aria-label={t("archive.closePreview")}
+                onClick={() => setSelectedId(null)}
+                className="fixed inset-0 z-40 bg-ink/30 md:hidden"
+              />
+              <aside
+                aria-label={t("archive.preview")}
+                className="archive-slip fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-auto bg-receipt md:sticky md:top-6 md:inset-auto md:z-auto md:w-72 md:shrink-0 md:max-h-none"
+              >
+                <Preview entry={selected} onClose={() => setSelectedId(null)} />
+              </aside>
+            </>
+          )}
+        </div>
       </div>
     </main>
   )
@@ -688,9 +679,8 @@ function Preview({
       </dl>
       <div className="receipt-dash my-3" />
       <div
-        className={`font-mono text-[10px] uppercase tracking-[0.15em] ${
-          it.receipt ? "text-ok" : "text-signal"
-        }`}
+        className={`font-mono text-[10px] uppercase tracking-[0.15em] ${it.receipt ? "text-ok" : "text-signal"
+          }`}
       >
         {it.receipt
           ? t("archive.proof")

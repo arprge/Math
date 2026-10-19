@@ -1,5 +1,11 @@
 # Dependencies
 node_modules/
+npm-cache/
+
+# TypeScript / tooling caches
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
 
 # Build output
 dist/
@@ -15,7 +21,12 @@ pnpm-debug.log*
 
 # Editor / OS
 .DS_Store
+Thumbs.db
 *.swp
+*.swo
+.idea/
+.history/
+.vscode/*.log
 
 # Env files
 .env
@@ -27,3 +38,16 @@ src/scan/models/
 
 # QA screenshots (qa/playwright-qa.mjs output)
 qa/shots/
+
+# Test and coverage output
+coverage/
+playwright-report/
+test-results/
+
+# Local certificates and private keys
+*.pem
+*.key
+
+#agents
+agents-figma.model
+CLAUDE.md 

@@ -31,8 +31,9 @@ export default {
     outliers: "Выбросы цен",
     none: "Нет",
     above: "{count} выше {fence}",
+    soonValue: "Сумма скорых истечений",
     cashGap: "Риск кассового разрыва · {pct}%",
-    cashGapDetail: "{soon}/{n} гарантий скоро истекают. Вероятность одновременного истечения P={p}.",
+    cashGapDetail: "{soon}/{n} гарантий скоро истекают. Вероятность 2+ истечений P={p}.",
   },
   filter: { all: "Все", active: "Актив.", soon: "Скоро", expired: "Истекли" },
   controls: {

@@ -1,8 +1,10 @@
+import { memo } from "react"
+
 import { useI18n } from "../i18n"
 import type { WarrantyItem } from "../domain/warranty"
 
 /** Draining cover bar + time-left label for a list row. */
-export default function ProgressLeft({
+function ProgressLeft({
   item,
   days,
   status,
@@ -31,12 +33,13 @@ export default function ProgressLeft({
         />
       </div>
       <span
-        className={`font-mono text-sm font-bold tabular-nums md:order-1 ${label} ${
-          status === "expired" ? "uppercase" : ""
-        }`}
+        className={`font-mono text-sm font-bold tabular-nums md:order-1 ${label} ${status === "expired" ? "uppercase" : ""
+          }`}
       >
         {status === "expired" ? t("status.expired") : fmt.left(days)}
       </span>
     </div>
   )
 }
+
+export default memo(ProgressLeft)

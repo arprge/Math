@@ -31,6 +31,18 @@ const BLANK: ItemDraft = {
   receipt: true,
 }
 
+const SCAN_MAX = 2400
+
+function scanBitmapOptions(image: ImageBitmap): ImageBitmapOptions | undefined {
+  const scale = Math.min(1, SCAN_MAX / Math.max(image.width, image.height))
+  if (scale === 1) return undefined
+  return {
+    resizeWidth: Math.max(1, Math.round(image.width * scale)),
+    resizeHeight: Math.max(1, Math.round(image.height * scale)),
+    resizeQuality: "high",
+  }
+}
+
 export default function RegisterDialog({
   onClose,
   onAdd,
@@ -74,7 +86,7 @@ export default function RegisterDialog({
 
     try {
       // The worker takes ownership of its copy; ours stays for the preview.
-      const result = await scanReceipt(await createImageBitmap(image), (quads) => {
+      const result = await scanReceipt(await createImageBitmap(image, scanBitmapOptions(image)), (quads) => {
         if (token === run.current) setStep((s) => (s.kind === "scan" ? { ...s, quads } : s))
       })
       if (token !== run.current) return
@@ -510,9 +522,8 @@ function Field({
 }) {
   const { t } = useI18n()
   const check = conf !== undefined && conf < 0.6
-  const cls = `w-full bg-paper border px-3 py-2 font-body text-sm focus:outline-none focus:border-ink transition-colors ${
-    check ? "border-warn/60" : "border-line"
-  }`
+  const cls = `w-full bg-paper border px-3 py-2 font-body text-sm focus:outline-none focus:border-ink transition-colors ${check ? "border-warn/60" : "border-line"
+    }`
   return (
     <label className={`block ${className}`}>
       <span className="mb-1 flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
@@ -624,12 +635,12 @@ function CameraView({
         }
         if (caps.torch) setTorch(false)
         if (caps.focusMode?.includes("continuous")) {
-          track.applyConstraints({ advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet] }).catch(() => {})
+          track.applyConstraints({ advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet] }).catch(() => { })
         }
         const v = videoRef.current
         if (!v) return
         v.srcObject = s
-        await v.play().catch(() => {})
+        await v.play().catch(() => { })
         if (!cancelled) setState("live")
       })
       .catch((e: DOMException) => {

@@ -50,8 +50,9 @@ export type EnrichedItem = {
 export function enrichItems(items: WarrantyItem[]): EnrichedItem[] {
   return items
     .map((it) => {
-      const days = daysLeft(it)
-      return { it, days, status: statusOf(days), expiry: expiryDate(it) }
+      const expiry = expiryDate(it)
+      const days = Math.round((expiry.getTime() - TODAY.getTime()) / MS_PER_DAY)
+      return { it, days, status: statusOf(days), expiry }
     })
     .sort((a, b) => a.days - b.days)
 }

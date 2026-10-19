@@ -26,8 +26,9 @@ export default {
     outliers: "Баға ауытқулары",
     none: "Жоқ",
     above: "{fence} жоғары: {count}",
+    soonValue: "Жақын аяқталатын құн",
     cashGap: "Қаражат олқылығы қаупі · {pct}%",
-    cashGapDetail: "{soon}/{n} кепілдік жақында бітеді. Бірге аяқталу ықтималдығы P={p}.",
+    cashGapDetail: "{soon}/{n} кепілдік жақында бітеді. 2+ аяқталу ықтималдығы P={p}.",
   },
   filter: { all: "Барлығы", active: "Белсенді", soon: "Жақында", expired: "Өткен" },
   controls: {

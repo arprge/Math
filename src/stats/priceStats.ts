@@ -11,8 +11,10 @@ export type PriceStats<T = unknown> = {
   fence: number
   outliers: T[]
   soon: number
+  soonValue: number
   n: number
   p: number
+  clusterP: number
 }
 
 /** Linear-interpolated quantile over an ascending-sorted numeric array. */
@@ -44,7 +46,24 @@ export function computePriceStats<T>(
   const soon = covered.filter((e) => e.status === "soon")
   const n = covered.length
   const p = n ? soon.length / n : 0
-  return { median, q1, q3, iqr, fence, outliers, soon: soon.length, n, p }
+  const clusterP =
+    n > 1
+      ? Math.max(0, 1 - (1 - p) ** n - n * p * (1 - p) ** (n - 1))
+      : 0
+  const soonValue = soon.reduce((total, entry) => total + entry.price, 0)
+  return {
+    median,
+    q1,
+    q3,
+    iqr,
+    fence,
+    outliers,
+    soon: soon.length,
+    soonValue,
+    n,
+    p,
+    clusterP,
+  }
 }
 
 export const priceCoverStat: StatModule<PriceStats<WarrantyItem>> = {

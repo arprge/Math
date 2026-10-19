@@ -85,8 +85,10 @@ export default function App() {
     [risks],
   )
 
-  const visible =
-    filter === "all" ? enriched : enriched.filter((e) => e.status === filter)
+  const visible = useMemo(
+    () => (filter === "all" ? enriched : enriched.filter((e) => e.status === filter)),
+    [enriched, filter],
+  )
 
   const meta =
     load.status === "loading"
