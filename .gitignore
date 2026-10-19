@@ -47,7 +47,3 @@ test-results/
 # Local certificates and private keys
 *.pem
 *.key
-
-#agents
-agents-figma.model
-CLAUDE.md 
