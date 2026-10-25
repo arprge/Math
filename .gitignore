@@ -33,7 +33,7 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Vendored OCR models (~12.7 MB) — run `npm run fetch-models` after cloning
+# Vendored OCR models (~6.2 MB) — run `npm run fetch-models` after cloning
 src/scan/models/
 
 # QA screenshots (qa/playwright-qa.mjs output)

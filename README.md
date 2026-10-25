@@ -1,6 +1,6 @@
 # Warranty Keeper
 
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
+[![Preact](https://img.shields.io/badge/Preact-11-673AB8?logo=preact&logoColor=white)](https://preactjs.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
@@ -36,10 +36,10 @@ your records stay on your device, and receipt scanning works offline.
 
 | Layer | Technology |
 |---|---|
-| UI | React 19, TypeScript 5.7 |
+| UI | Preact 11 compat, TypeScript 5.7 |
 | Build | Vite 8 |
 | Styling | Tailwind CSS v4 (design tokens, no runtime CSS-in-JS) |
-| OCR | `onnxruntime-web` running PP-OCRv5 in a Web Worker |
+| OCR | `onnxruntime-web` running PP-OCRv6 tiny in a Web Worker |
 | Storage | `localStorage` |
 | Formatting | oxfmt |
 
@@ -57,9 +57,18 @@ npm run dev
 
 Open <http://localhost:8443>.
 
-The OCR models are not stored in the repository, so `npm run fetch-models` downloads and
-verifies them (~12.7 MB) on first setup. The app itself runs without them; only receipt
-scanning needs the models.
+The OCR models are not stored in the repository, so `npm run fetch-models` downloads,
+verifies and packs them (~1.2 MB) on first setup. The app itself runs without them; only
+receipt scanning needs the models. Packing uses `onnx` + `numpy`
+(`pip install onnx==1.23.2 numpy==2.5.4`); without them the float32 models still work,
+they are just ~5x larger.
+
+On the deployed site nothing has to be downloaded or uploaded by hand: GitHub Pages
+serves the runtime and the models, and the browser keeps both on the device. The first
+scan is a one-time ~5 MB transfer (about 3.7 MB gzipped runtime + 1.2 MB models); after
+that it starts instantly and works offline. A service worker stops GitHub Pages' short
+`max-age=600` from re-fetching the runtime, and pre-warming starts the download during
+the first idle moment on the page.
 
 ### Scripts
 
@@ -67,8 +76,10 @@ scanning needs the models.
 |---|---|
 | `npm run dev` | Start the development server. |
 | `npm run build` | Build the production bundle into `dist/`. |
+| `npm run size` | Build and print JavaScript/CSS bundle sizes by file. |
 | `npm run preview` | Serve the production build locally. |
-| `npm run fetch-models` | Download and verify the OCR models. |
+| `npm run fetch-models` | Download, verify and pack the OCR models. |
+| `npm run quantize-models` | Prune + int8-pack the models already on disk. |
 | `npm run format` | Format changed files with oxfmt. |
 
 ### Configuration

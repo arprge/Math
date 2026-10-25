@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
+import type { ReactNode } from "preact/compat"
+import type { TargetedEvent } from "preact"
 
 import type { ItemDraft } from "../domain/repo"
 import { TODAY } from "../domain/warranty"
@@ -150,13 +152,13 @@ export default function RegisterDialog({
     return () => window.removeEventListener("paste", onPaste)
   }, [step.kind, begin])
 
-  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ""
+  const onFile = (e: TargetedEvent<HTMLInputElement, Event>) => {
+    const file = e.currentTarget.files?.[0]
+    e.currentTarget.value = ""
     if (file) begin(file)
   }
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: TargetedEvent<HTMLFormElement, SubmitEvent>) => {
     e.preventDefault()
     if (saving) return
     if (!form.product.trim()) {
@@ -189,7 +191,7 @@ export default function RegisterDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-ink/40 p-4 md:items-center"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-scrim p-4 md:items-center"
       onClick={dismiss}
     >
       <div
@@ -210,7 +212,7 @@ export default function RegisterDialog({
           if (step.kind !== "choose") return
           e.preventDefault()
           setDragging(false)
-          const file = [...e.dataTransfer.files].find((f) => f.type.startsWith("image/"))
+          const file = [...(e.dataTransfer?.files ?? [])].find((f) => f.type.startsWith("image/"))
           if (file) begin(file)
         }}
       >
@@ -297,17 +299,17 @@ export default function RegisterDialog({
                     <input
                       className={cls}
                       value={form.product}
-                      onChange={(e) => set("product", e.target.value)}
+                      onChange={(e) => set("product", e.currentTarget.value)}
                       placeholder={t("scan.field.productPlaceholder")}
                     />
                   )}
                 </Field>
                 <Field label={t("scan.field.brand")} conf={step.conf.brand}>
-                  {(cls) => <input className={cls} value={form.brand} onChange={(e) => set("brand", e.target.value)} />}
+                  {(cls) => <input className={cls} value={form.brand} onChange={(e) => set("brand", e.currentTarget.value)} />}
                 </Field>
                 <Field label={t("scan.field.category")} conf={step.conf.category}>
                   {(cls) => (
-                    <select className={cls} value={form.category} onChange={(e) => set("category", e.target.value)}>
+                    <select className={cls} value={form.category} onChange={(e) => set("category", e.currentTarget.value)}>
                       {CATEGORIES.map((c) => (
                         <option key={c} value={c}>
                           {fmt.category(c)}
@@ -321,7 +323,7 @@ export default function RegisterDialog({
                     <input
                       className={`${cls} font-mono`}
                       value={form.serial}
-                      onChange={(e) => set("serial", e.target.value)}
+                      onChange={(e) => set("serial", e.currentTarget.value)}
                     />
                   )}
                 </Field>
@@ -331,7 +333,7 @@ export default function RegisterDialog({
                       type="date"
                       className={cls}
                       value={form.purchaseDate}
-                      onChange={(e) => set("purchaseDate", e.target.value)}
+                      onChange={(e) => set("purchaseDate", e.currentTarget.value)}
                     />
                   )}
                 </Field>
@@ -343,7 +345,7 @@ export default function RegisterDialog({
                       inputMode="numeric"
                       className={cls}
                       value={form.warrantyMonths}
-                      onChange={(e) => set("warrantyMonths", Number(e.target.value))}
+                      onChange={(e) => set("warrantyMonths", Number(e.currentTarget.value))}
                     />
                   )}
                 </Field>
@@ -356,12 +358,12 @@ export default function RegisterDialog({
                       inputMode="decimal"
                       className={cls}
                       value={form.price}
-                      onChange={(e) => set("price", Number(e.target.value))}
+                      onChange={(e) => set("price", Number(e.currentTarget.value))}
                     />
                   )}
                 </Field>
                 <Field label={t("scan.field.store")} conf={step.conf.store}>
-                  {(cls) => <input className={cls} value={form.store} onChange={(e) => set("store", e.target.value)} />}
+                  {(cls) => <input className={cls} value={form.store} onChange={(e) => set("store", e.currentTarget.value)} />}
                 </Field>
               </fieldset>
             </div>
@@ -389,7 +391,7 @@ export default function RegisterDialog({
                 autoFocus
                 disabled={saving}
                 aria-busy={saving}
-                className="min-w-[9.5rem] bg-signal px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white transition-colors hover:bg-ink disabled:bg-ink"
+                className="min-w-[9.5rem] bg-signal px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white transition-colors hover:bg-ink hover:text-paper disabled:bg-ink disabled:text-paper"
               >
                 {saving ? (
                   <span className="skeleton-pulse">{t("scan.printing")}</span>
@@ -486,7 +488,7 @@ function Tile({
   index: string
   title: string
   meta: string
-  icon: React.ReactNode
+  icon: ReactNode
   onClick: () => void
   autoFocus?: boolean
 }) {
@@ -518,7 +520,7 @@ function Field({
   label: string
   conf?: number
   className?: string
-  children: (cls: string) => React.ReactNode
+  children: (cls: string) => ReactNode
 }) {
   const { t } = useI18n()
   const check = conf !== undefined && conf < 0.6
@@ -561,7 +563,8 @@ function QuadLayer({ quads, faint }: { quads: Quad[]; faint?: boolean }) {
           points={`${q[0]},${q[1]} ${q[2]},${q[3]} ${q[4]},${q[5]} ${q[6]},${q[7]}`}
           className={faint ? "" : "quad-in"}
           style={faint ? undefined : { animationDelay: `${Math.min(i * 14, 420)}ms` }}
-          fill={faint ? "rgb(219 68 51 / 0.08)" : "rgb(219 68 51 / 0.14)"}
+          fillOpacity={faint ? 0.08 : 0.14}
+          fill="var(--color-signal)"
           stroke="var(--color-signal)"
           strokeWidth={faint ? 0.75 : 1.25}
           vectorEffect="non-scaling-stroke"
@@ -681,7 +684,7 @@ function CameraView({
   const bar = "font-mono text-[10px] uppercase tracking-[0.18em] text-white/80 hover:text-white"
 
   return (
-    <div className="relative aspect-[3/4] max-h-[70vh] w-full overflow-hidden bg-ink max-sm:fixed max-sm:inset-0 max-sm:z-[60] max-sm:aspect-auto max-sm:max-h-none">
+    <div className="relative aspect-[3/4] max-h-[70vh] w-full overflow-hidden bg-black max-sm:fixed max-sm:inset-0 max-sm:z-[60] max-sm:aspect-auto max-sm:max-h-none">
       <video ref={videoRef} playsInline muted autoPlay className="absolute inset-0 h-full w-full object-cover" />
 
       {state === "live" && (
@@ -692,7 +695,7 @@ function CameraView({
         </div>
       )}
 
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-ink/70 to-transparent px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-6">
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-6">
         <button type="button" onClick={onBack} className={bar}>
           {t("scan.cam.back")}
         </button>
@@ -710,7 +713,7 @@ function CameraView({
             {state === "blocked" ? t("scan.cam.blockedHint") : t("scan.cam.unavailableHint")}
           </p>
           <div className="mt-2 flex flex-wrap justify-center gap-2">
-            <button type="button" onClick={onSystemCamera} className="bg-signal px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white hover:bg-white hover:text-ink">
+            <button type="button" onClick={onSystemCamera} className="bg-signal px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white hover:bg-white hover:text-black">
               {t("scan.cam.cameraApp")}
             </button>
             <button type="button" onClick={onUpload} className="border border-white/40 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white hover:border-white">
@@ -720,7 +723,7 @@ function CameraView({
         </div>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 grid grid-cols-3 items-center bg-gradient-to-t from-ink/70 to-transparent px-4 pt-8 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div className="absolute inset-x-0 bottom-0 grid grid-cols-3 items-center bg-gradient-to-t from-black/70 to-transparent px-4 pt-8 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <span />
         <button
           type="button"

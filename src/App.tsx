@@ -9,7 +9,6 @@ import {
 import { type ItemDraft, loadItems, saveItem } from "./domain/repo"
 import Header, { type Page } from "./components/Header"
 import Footer from "./components/Footer"
-import ArchivePage from "./pages/Archive"
 import RegisterPage, { type Filter, type ViewMode } from "./pages/Register"
 import { warmReader } from "./scan/ocr"
 import { useI18n } from "./i18n"
@@ -22,6 +21,9 @@ const prepareRegister = () => {
   loadRegisterDialog()
   warmReader({ speculative: true })
 }
+
+const loadArchivePage = () => import("./pages/Archive")
+const ArchivePage = lazy(loadArchivePage)
 
 export type LoadState =
   | { status: "loading" }
@@ -65,6 +67,23 @@ export default function App() {
     return () => clearTimeout(t)
   }, [printed])
 
+  // Pull the reader down while the browser is idle, so the first scan starts
+  // on an already-compiled engine. Skipped on metered/slow connections.
+  useEffect(() => {
+    const connection = (navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string }
+    }).connection
+    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType ?? "")) return
+
+    const warm = () => warmReader({ speculative: true })
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(warm, { timeout: 3000 })
+      return () => window.cancelIdleCallback(id)
+    }
+    const id = window.setTimeout(warm, 2000)
+    return () => window.clearTimeout(id)
+  }, [])
+
   const addItem = async (draft: ItemDraft) => {
     const saved = await saveItem(draft)
     setItems((s) => [...s, saved])
@@ -101,10 +120,18 @@ export default function App() {
 
   return (
     <div className="min-h-full font-body text-ink">
-      <Header page={page} setPage={setPage} onReload={fetchItems} meta={meta} />
+      <Header
+        page={page}
+        setPage={setPage}
+        onPrepareArchive={loadArchivePage}
+        onReload={fetchItems}
+        meta={meta}
+      />
 
       {page === "archive" && (
-        <ArchivePage enriched={enriched} load={load} onRetry={fetchItems} />
+        <Suspense fallback={null}>
+          <ArchivePage enriched={enriched} load={load} onRetry={fetchItems} />
+        </Suspense>
       )}
 
       {page === "register" && (

@@ -1,9 +1,9 @@
 /// <reference lib="webworker" />
-// Receipt reader worker: owns onnxruntime, the two PP-OCRv5 models, image
+// Receipt reader worker: owns onnxruntime, the two PP-OCRv6 models, image
 // downscaling and parsing, so the main thread only ever sends a bitmap.
 
-import detLocal from "./models/ppocrv5-mobile-det.onnx?url"
-import recLocal from "./models/ppocrv5-mobile-rec-en.onnx?url"
+import detLocal from "./models/ppocrv6-tiny-det.onnx?url"
+import recLocal from "./models/ppocrv6-tiny-rec.onnx?url"
 import gpuWasm from "onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm?url"
 import cpuWasm from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
 import dict from "./dict"
@@ -14,13 +14,25 @@ import type { FromWorker, ToWorker } from "./ocr"
 declare const self: DedicatedWorkerGlobalScope
 
 const HF = "https://huggingface.co/PaddlePaddle"
-// Same-origin first (hashed, immutable); the hub is a fallback mirror.
+// Same-origin first (hashed, immutable); the hub is a fallback mirror. Revisions
+// are pinned so the mirrors stay byte-identical to the checksums in
+// `scripts/fetch-models.mjs`.
 const MODELS = {
-  det: { urls: [detLocal, `${HF}/PP-OCRv5_mobile_det_onnx/resolve/main/inference.onnx`], bytes: 4_826_518 },
-  rec: { urls: [recLocal, `${HF}/en_PP-OCRv5_mobile_rec_onnx/resolve/main/inference.onnx`], bytes: 7_848_423 },
+  det: {
+    urls: [detLocal, `${HF}/PP-OCRv6_tiny_det_onnx/resolve/2ba1506c0380b8f0b03dd142459aac66d4421f6c/inference.onnx`],
+    bytes: 511_234,
+  },
+  rec: {
+    urls: [recLocal, `${HF}/PP-OCRv6_tiny_rec_onnx/resolve/2612ab37152ae0a677521bae4e1e3d4fb4cf7c30/inference.onnx`],
+    bytes: 664_017,
+  },
 }
-const CACHE = "wk-ocr-v1"
+const CACHE = "wk-ocr-v3"
 const SRC_MAX = 2400
+
+// Drop older model caches (PP-OCRv5 and float32 v6) from returning visitors.
+void self.caches?.delete("wk-ocr-v1").catch(() => {})
+void self.caches?.delete("wk-ocr-v2").catch(() => {})
 
 const post = (m: FromWorker) => self.postMessage(m)
 

@@ -4,6 +4,22 @@
     <!-- figma:head-start -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131210" />
+    <script>
+      // Stamp the resolved theme before first paint: no flash of the wrong mode.
+      (function () {
+        var saved = null;
+        try {
+          saved = localStorage.getItem("warranty-keeper:theme");
+        } catch (e) {}
+        var dark =
+          saved === "dark" ||
+          (saved !== "light" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
     <title><!-- figma:title --></title>
     <!-- figma:head-end -->
   </head>

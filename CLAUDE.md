@@ -4,16 +4,16 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 **integrating Figma designs via the Figma MCP server**.
 
 > This project is a **Figma Make export** (`package.json` name: `figma-make-app`).
-> It is a single-page React 19 + Vite + Tailwind v4 app called **Warranty Keeper**.
+> It is a single-page Preact 11 compat + Vite + Tailwind v4 app called **Warranty Keeper**.
 > Keep it looking like it was produced by Figma Make: minimal dependencies,
 > no build config sprawl, Tailwind utilities for layout, and a small set of
 > hand-rolled component classes in `src/index.css`.
 >
 > **This repo mirrors the current Figma Make upstream** (`Warranty-tracker-app`,
-> file key `csyBeQ21GnrycKRpxlwV47`). The port plan lives in
-> [`agents-figma.md`](agents-figma.md); its phases are complete and the §8 QA matrix
-> passes (30/30 checks via `qa/playwright-qa.mjs`). Upstream is the source of truth —
-> prefer upstream file contents verbatim over local rewrites. Upstream's own design
+> file key `csyBeQ21GnrycKRpxlwV47`). The port is complete and the QA matrix
+> (register, archive, i18n, responsive, DEMO fault injection and the full OCR flow)
+> is exercised by `qa/playwright-qa.mjs`. Upstream is the source of truth — prefer
+> upstream file contents verbatim over local rewrites. The upstream Figma Make design
 > documents are mirrored in [`plans/`](plans).
 
 ---
@@ -23,9 +23,9 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 | Concern | Answer |
 |---|---|
 | Language | TypeScript (strict), `.tsx` / `.ts` |
-| UI framework | React 19.3 (`react`, `react-dom`) — **no** router, **no** state lib |
+| UI framework | Preact 11 via `preact/compat` — **no** router, **no** state lib |
 | Styling | Tailwind CSS **v4** via `@tailwindcss/vite` (CSS-first config, **no `tailwind.config.js`**) |
-| Build | Vite 8 + `@vitejs/plugin-react`, Rolldown-based |
+| Build | Vite 8 + `@preact/preset-vite`, Rolldown-based |
 | Package manager | npm (`package-lock.json`) |
 | Formatter | `oxfmt` (`npm run format`) — semicolon-free style; **no ESLint / Prettier / tests** |
 | Entry | `index.html` → `src/main.tsx` → `src/App.tsx` (wrapped in `I18nProvider`) |
@@ -33,11 +33,11 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 | Components | `src/components/*` (primitives) + `src/pages/*` (Register, Archive) |
 | State | `useState`/`useMemo` in `src/App.tsx`; persistence via `src/domain/repo.ts` |
 | i18n | EN / RU / KK via `src/i18n` (`useI18n()`, dictionaries in `src/i18n/dict`) |
-| OCR | On-device PaddleOCR PP-OCRv5 via `onnxruntime-web` in a Web Worker (`src/scan`) |
+| OCR | On-device PaddleOCR PP-OCRv6 tiny via `onnxruntime-web` in a Web Worker (`src/scan`) |
 | Icons | None — inline SVG + Unicode glyphs only |
 | Assets | Google Fonts CDN; two `.onnx` models in `src/scan/models/` (gitignored — run `npm run fetch-models`) |
 | Alias | `@/*` → `./src/*` (configured in `tsconfig.json` + `vite.config.ts`; source uses relative imports) |
-| QA | `node qa/playwright-qa.mjs` — headless-Chromium pass over the §8 matrix (Playwright is **not** a project dep) |
+| QA | `node qa/playwright-qa.mjs` — headless-Chromium pass over the full QA matrix (Playwright is **not** a project dep) |
 
 **Golden rules for agents**
 
@@ -114,8 +114,8 @@ All design tokens live in one place: the `@theme` block at the top of
 
 ### 1.2 Token transformation systems
 
-**None.** There is no Style Dictionary, no theme switcher, no dark mode, and no
-runtime theming. Tokens are compile-time CSS variables emitted by Tailwind v4.
+**None.** Runtime theming is handled by `src/lib/theme.ts` and `ThemeSwitcher`;
+tokens are compile-time CSS variables emitted by Tailwind v4.
 If Figma variables/tokens need to be synced, translate them **by hand** into the
 `@theme` block (and note any new token in this file).
 
@@ -203,9 +203,9 @@ Helpers: `barcodesFrom(serial)` in [`src/lib/barcode.ts`](src/lib/barcode.ts) ge
 ### 2.3 Documentation / Storybook
 
 - No Storybook, no MDX, no doc comments beyond concise `//` header comments.
-- `vite.config.ts` registers four Figma Make plugins: `figmaSiteConfiguration`
+- `vite.config.ts` registers three Figma Make plugins: `figmaSiteConfiguration`
   (applies `.figma/make/site.json` to the HTML shell + serves `robots.txt`),
-  `figmaErrorOverlayReplay`, `figmaReactRefreshBoundaryFallback`, and
+  `figmaErrorOverlayReplay`, and
   `figmaMakeKitPlugin` (dev-only route `/.figma/make/kit.html` exposing
   `window.__FIGMA__.stories` from `/src/**/*.stories.{ts,tsx,js,jsx}` — there are
   currently zero story files, so it simply renders an empty registry).
@@ -217,16 +217,15 @@ Helpers: `barcodesFrom(serial)` in [`src/lib/barcode.ts`](src/lib/barcode.ts) ge
 
 ### 3.1 UI framework
 
-React 19 with the automatic JSX runtime (`"jsx": "react-jsx"` in `tsconfig.json`).
-No routing, no data-fetching, no form library, no UI kit. The three dependencies
-are React, React DOM, and the on-device OCR runtime:
+Preact 11 through `preact/compat` with the automatic JSX runtime (`"jsx": "react-jsx"`
+in `tsconfig.json`). No routing, no data-fetching, no form library, no UI kit. The
+runtime dependencies are Preact and the on-device OCR runtime:
 
 ```jsonc
 // package.json
 "dependencies": {
   "onnxruntime-web": "^1.30.0",
-  "react": "^19.0.0",
-  "react-dom": "^19.0.0"
+  "preact": "^11.0.2"
 }
 ```
 
@@ -246,7 +245,7 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
 
 ### 3.3 Build system & bundler
 
-- **Vite 8** (Rolldown-based), `@vitejs/plugin-react`.
+- **Vite 8** (Rolldown-based), `@preact/preset-vite`.
 - `npm run dev` → dev server on `0.0.0.0:8443` (overridable via `PORT` /
   `FIGMA_DEV_SERVER_HOST`); `strictPort: true`.
 - `npm run build` → `dist/`; `npm run preview`.
@@ -277,11 +276,20 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
 
 ### 3.5 On-device OCR (receipt scanner)
 
-- [`src/scan/`](src/scan) is the full PaddleOCR PP-OCRv5 pipeline, run in a Web
+- [`src/scan/`](src/scan) is the full PaddleOCR PP-OCRv6 tiny pipeline, run in a Web
   Worker: `ocr.worker.ts` (worker entry), `engine.ts` (det/rec + CTC decode),
   `parseReceipt.ts` (text → receipt fields), `dict.ts` (charset),
   `RegisterDialog.tsx` (camera/upload UI), `ocr.ts` (main-thread client +
   `warmReader()` warm-up).
+- The tiny tier is packed on setup: `scripts/quantize-models.py` slices the 6 906-class
+  classifier to the 617 classes `dict.ts` actually decodes and stores Conv/MatMul
+  weights as per-channel int8, taking the pair from 6.2 MB to ~1.2 MB. Softmax
+  renormalises but keeps the ordering, so decoded text is unchanged; inference is
+  slightly faster because the classifier is smaller. Full int8 QDQ (activations too)
+  was measured ~40% slower on the WASM backend and is not used.
+- `dict.ts` is the model's ASCII/Latin/symbol prefix (616 of 6 905 classes); the CTC
+  decoder skips the CJK/fullwidth tail because this reader only targets Latin-script
+  receipts. `KEEP_CLASSES` in the packer must stay in sync with its length.
 - Runtime is `onnxruntime-web` with **WebGPU first, WASM fallback**; the two
   models are imported from [`src/scan/models/`](src/scan/models) with `?url` (bundled,
   not fetched from a CDN at build time). That directory is **gitignored** — run
@@ -289,14 +297,22 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
   HuggingFace mirror as a second URL in case the bundled asset can't be read.
 - **Setup:** `npm install` → `npm run fetch-models` → `npm run dev` / `npm run build`.
 - The scanner is lazy-loaded: `App.tsx` imports `./scan/RegisterDialog` on first
-  intent (hover/focus of Register) or on open, and pre-warms the reader.
+  intent (hover/focus of Register) or on open, and pre-warms the reader. The same
+  warm-up also runs in the first idle slot after load (skipped when the browser
+  reports `saveData` or a 2G connection), so the engine is usually compiled
+  before the dialog opens.
+- `public/sw.js` caches the hashed ORT `.wasm` and worker bundle cache-first:
+  GitHub Pages only sends `Cache-Control: max-age=600`, which would otherwise
+  revalidate the ~14 MB runtime on every visit. Model weights stay in the
+  worker's own `wk-ocr-v2` Cache API bucket; `navigator.storage.persist()` asks
+  the browser not to evict them. Registration is production-only.
 - Keep the pipeline client-side; do not move inference to a server.
 
 ### 3.6 QA harness (headless Chromium)
 
 - [`qa/playwright-qa.mjs`](qa/playwright-qa.mjs) is a **standalone script** (no project
   dependency) that drives the whole app in a headless Chromium and asserts the QA
-  matrix in [`agents-figma.md`](agents-figma.md) §8: register states/filters/views,
+  matrix: register states/filters/views,
   archive ledger/drawer/closet paging, EN/RU/KZ switching and persistence, responsive
   overflow, the DEMO fault injector, and the real on-device OCR flow (upload → review →
   save, clipboard paste, camera with a fake device, retake, save failure).
@@ -318,12 +334,14 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
 - **Fonts** are loaded from the **Google Fonts CDN** via `@import` at the top of
   `src/index.css` (Archivo, Inter, JetBrains Mono).
 - **The only binary assets** are the two OCR models used by the scanner
-  (`ppocrv5-mobile-det.onnx` ~4.8 MB, `ppocrv5-mobile-rec-en.onnx` ~7.8 MB).
+  (`ppocrv6-tiny-det.onnx` ~0.5 MB, `ppocrv6-tiny-rec.onnx` ~0.66 MB after packing).
   They live in `src/scan/models/`, are **gitignored**, and are imported with `?url`
   from `ocr.worker.ts` (emitted to `dist/assets/`). Run **`npm run fetch-models`**
-  after cloning — it downloads them from the PaddlePaddle HuggingFace repos and
-  verifies size + sha256 (`-- --check` verifies without downloading). There is
-  still no `public/`, `src/assets`, or committed image/video/font.
+  after cloning — it downloads them from the PaddlePaddle HuggingFace repos, verifies
+  size + sha256 and packs them with `scripts/quantize-models.py` (`-- --check`
+  verifies without downloading, `-- --pack` requires packing). Apart from the two
+  `.onnx` models, `public/` holds only `_headers` and `sw.js` — no committed
+  image/video/font and no `src/assets`.
 - **Graphics** are generated in code, not imported:
   - the receipt torn edge is an inline `<svg>` path (`src/components/MoneyStat.tsx`),
   - the barcode is a row of styled `<div>` bars (`src/components/ReceiptCard.tsx`,
@@ -404,20 +422,23 @@ blocks unless unavoidable.
 ```
 Math/                         # repo root (git repo)
 ├── index.html                # Vite shell; contains Figma slot comments
-├── package.json              # "figma-make-app", scripts: dev/build/preview/format
-├── tsconfig.json             # strict TS, jsx: react-jsx, @/* alias
-├── vite.config.ts            # Vite config + the four Figma Make plugins
+├── package.json              # "figma-make-app", scripts: dev/build/size/preview/format/fetch-models
+├── tsconfig.json             # strict TS, jsx: react-jsx, @/* alias + preact/compat remaps
+├── vite.config.ts            # Vite config + the Figma Make plugins
 ├── .vscode/mcp.json          # Figma MCP server registration (HTTP)
 ├── .figma/make/site.json     # site metadata applied to the HTML shell
-├── agents-figma.md           # port plan + phase log against the Figma Make upstream
+├── public/
+│   ├── _headers              # COOP/COEP isolation headers (GitHub Pages)
+│   └── sw.js                 # caches the hashed ORT wasm + worker bundle (prod)
+├── scripts/                  # fetch-models.mjs, quantize-models.py, size-report.mjs
 ├── plans/                    # upstream Figma Make design docs (ported verbatim)
 ├── qa/
-│   └── playwright-qa.mjs     # automated §8 QA matrix (headless Chromium; not a dep)
+│   └── playwright-qa.mjs     # automated QA matrix (headless Chromium; not a dep)
 ├── dist/                     # build output (generated; do not hand-edit)
 ├── ipynb/                    # unrelated Kazakh statistics coursework (ignore)
 └── src/
-    ├── main.tsx              # React root; I18nProvider + ./index.css
-    ├── App.tsx               # shell: state, composition, lazy scanner dialog (exports LoadState)
+    ├── main.tsx              # Preact root; I18nProvider, service-worker registration
+    ├── App.tsx               # shell: state, composition, lazy scanner + archive (exports LoadState)
     ├── index.css             # tokens (@theme), globals, component classes
     ├── vite-env.d.ts         # /// <reference types="vite/client" />
     ├── components/           # one component per file (layout chrome + primitives)
@@ -437,7 +458,7 @@ Math/                         # repo root (git repo)
     ├── scan/                 # on-device OCR receipt reader (Web Worker)
     │   ├── RegisterDialog.tsx
     │   ├── ocr.ts / ocr.worker.ts / engine.ts / parseReceipt.ts / dict.ts
-    │   └── models/           # vendored PP-OCRv5 .onnx models (det + rec-en)
+    │   └── models/           # vendored PP-OCRv6 tiny .onnx models (det + rec)
     ├── dev/
     │   └── StateDemo.tsx     # DEMO-only load-state trigger (remove with src/dev)
     ├── domain/               # pure domain model (no React)
@@ -537,11 +558,10 @@ The Figma MCP server is registered in [`.vscode/mcp.json`](.vscode/mcp.json):
 
 ### 8.4 Figma Make hosting hooks
 
-- `vite.config.ts` **is the upstream file verbatim** and registers all four Figma
-  Make plugins in `plugins`: `react()`, `tailwindcss()`,
+- `vite.config.ts` registers the Preact preset plus the Figma Make plugins in
+  `plugins`: `preact()`, `tailwindcss()`,
   `figmaSiteConfiguration(siteConfiguration)` (applies `.figma/make/site.json` to
   the HTML shell and serves `/robots.txt`), `figmaErrorOverlayReplay()`,
-  `figmaReactRefreshBoundaryFallback()`, and
   `figmaMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" })`
   (dev-only `/.figma/make/kit.html` route).
 - `.figma/make/site.json` drives the `<title>`, description, `robots` meta and

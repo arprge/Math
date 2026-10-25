@@ -3,6 +3,7 @@ import type { Dict } from "./en"
 export default {
   nav: { register: "Реестр", archive: "Архив" },
   lang: { label: "Язык" },
+  theme: { label: "Тема", auto: "Авто", light: "Светлая", dark: "Тёмная" },
   meta: {
     loading: "Читаем файл…",
     error: "Файл не прочитан",

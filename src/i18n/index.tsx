@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import type { ReactNode } from "preact/compat"
 
 import en, { type Dict, type Plural } from "./dict/en"
 import ru from "./dict/ru"
@@ -23,10 +24,10 @@ type Leaf = string | Plural
 /** Every dotted key that resolves to a string or plural value. */
 export type Key<T = Dict> = {
   [K in keyof T & string]: T[K] extends Leaf
-    ? K
-    : T[K] extends readonly string[]
-      ? never
-      : `${K}.${Key<T[K]>}`
+  ? K
+  : T[K] extends readonly string[]
+  ? never
+  : `${K}.${Key<T[K]>}`
 }[keyof T & string]
 
 type Vars = Record<string, string | number>
@@ -98,7 +99,7 @@ type I18n = ReturnType<typeof makeI18n> & { setLang: (l: Lang) => void }
 
 const I18nContext = createContext<I18n | null>(null)
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
+export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang)
 
   const setLang = useCallback((next: Lang) => {

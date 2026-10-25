@@ -7,6 +7,7 @@ const plural = (p: Plural): Plural => p
 const en = {
   nav: { register: "Register", archive: "Archive" },
   lang: { label: "Language" },
+  theme: { label: "Theme", auto: "Auto", light: "Light", dark: "Dark" },
   meta: {
     loading: "Reading file…",
     error: "File not read",

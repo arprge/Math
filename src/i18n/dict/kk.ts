@@ -3,6 +3,7 @@ import type { Dict } from "./en"
 export default {
   nav: { register: "Тізілім", archive: "Мұрағат" },
   lang: { label: "Тіл" },
+  theme: { label: "Тақырып", auto: "Авто", light: "Ашық", dark: "Күңгірт" },
   meta: {
     loading: "Файл оқылуда…",
     error: "Файл оқылмады",
