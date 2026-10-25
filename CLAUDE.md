@@ -10,10 +10,10 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 > hand-rolled component classes in `src/index.css`.
 >
 > **This repo mirrors the current Figma Make upstream** (`Warranty-tracker-app`,
-> file key `csyBeQ21GnrycKRpxlwV47`). The port plan lives in
-> [`agents-figma.md`](agents-figma.md); its phases are complete and the §8 QA matrix
-> passes (30/30 checks via `qa/playwright-qa.mjs`). Upstream is the source of truth —
-> prefer upstream file contents verbatim over local rewrites. Upstream's own design
+> file key `csyBeQ21GnrycKRpxlwV47`). The port is complete and the QA matrix
+> (register, archive, i18n, responsive, DEMO fault injection and the full OCR flow)
+> is exercised by `qa/playwright-qa.mjs`. Upstream is the source of truth — prefer
+> upstream file contents verbatim over local rewrites. The upstream Figma Make design
 > documents are mirrored in [`plans/`](plans).
 
 ---
@@ -25,7 +25,7 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 | Language | TypeScript (strict), `.tsx` / `.ts` |
 | UI framework | Preact 11 via `preact/compat` — **no** router, **no** state lib |
 | Styling | Tailwind CSS **v4** via `@tailwindcss/vite` (CSS-first config, **no `tailwind.config.js`**) |
-| Build | Vite 8 + `@vitejs/plugin-react`, Rolldown-based |
+| Build | Vite 8 + `@preact/preset-vite`, Rolldown-based |
 | Package manager | npm (`package-lock.json`) |
 | Formatter | `oxfmt` (`npm run format`) — semicolon-free style; **no ESLint / Prettier / tests** |
 | Entry | `index.html` → `src/main.tsx` → `src/App.tsx` (wrapped in `I18nProvider`) |
@@ -37,7 +37,7 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 | Icons | None — inline SVG + Unicode glyphs only |
 | Assets | Google Fonts CDN; two `.onnx` models in `src/scan/models/` (gitignored — run `npm run fetch-models`) |
 | Alias | `@/*` → `./src/*` (configured in `tsconfig.json` + `vite.config.ts`; source uses relative imports) |
-| QA | `node qa/playwright-qa.mjs` — headless-Chromium pass over the §8 matrix (Playwright is **not** a project dep) |
+| QA | `node qa/playwright-qa.mjs` — headless-Chromium pass over the full QA matrix (Playwright is **not** a project dep) |
 
 **Golden rules for agents**
 
@@ -203,7 +203,7 @@ Helpers: `barcodesFrom(serial)` in [`src/lib/barcode.ts`](src/lib/barcode.ts) ge
 ### 2.3 Documentation / Storybook
 
 - No Storybook, no MDX, no doc comments beyond concise `//` header comments.
-- `vite.config.ts` registers four Figma Make plugins: `figmaSiteConfiguration`
+- `vite.config.ts` registers three Figma Make plugins: `figmaSiteConfiguration`
   (applies `.figma/make/site.json` to the HTML shell + serves `robots.txt`),
   `figmaErrorOverlayReplay`, and
   `figmaMakeKitPlugin` (dev-only route `/.figma/make/kit.html` exposing
@@ -245,7 +245,7 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
 
 ### 3.3 Build system & bundler
 
-- **Vite 8** (Rolldown-based), `@vitejs/plugin-react`.
+- **Vite 8** (Rolldown-based), `@preact/preset-vite`.
 - `npm run dev` → dev server on `0.0.0.0:8443` (overridable via `PORT` /
   `FIGMA_DEV_SERVER_HOST`); `strictPort: true`.
 - `npm run build` → `dist/`; `npm run preview`.
@@ -312,7 +312,7 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
 
 - [`qa/playwright-qa.mjs`](qa/playwright-qa.mjs) is a **standalone script** (no project
   dependency) that drives the whole app in a headless Chromium and asserts the QA
-  matrix in [`agents-figma.md`](agents-figma.md) §8: register states/filters/views,
+  matrix: register states/filters/views,
   archive ledger/drawer/closet paging, EN/RU/KZ switching and persistence, responsive
   overflow, the DEMO fault injector, and the real on-device OCR flow (upload → review →
   save, clipboard paste, camera with a fake device, retake, save failure).
@@ -339,8 +339,9 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
   from `ocr.worker.ts` (emitted to `dist/assets/`). Run **`npm run fetch-models`**
   after cloning — it downloads them from the PaddlePaddle HuggingFace repos, verifies
   size + sha256 and packs them with `scripts/quantize-models.py` (`-- --check`
-  verifies without downloading, `-- --pack` requires packing). There is
-  still no `public/`, `src/assets`, or committed image/video/font.
+  verifies without downloading, `-- --pack` requires packing). Apart from the two
+  `.onnx` models, `public/` holds only `_headers` and `sw.js` — no committed
+  image/video/font and no `src/assets`.
 - **Graphics** are generated in code, not imported:
   - the receipt torn edge is an inline `<svg>` path (`src/components/MoneyStat.tsx`),
   - the barcode is a row of styled `<div>` bars (`src/components/ReceiptCard.tsx`,
@@ -421,20 +422,23 @@ blocks unless unavoidable.
 ```
 Math/                         # repo root (git repo)
 ├── index.html                # Vite shell; contains Figma slot comments
-├── package.json              # "figma-make-app", scripts: dev/build/preview/format
-├── tsconfig.json             # strict TS, jsx: react-jsx, @/* alias
-├── vite.config.ts            # Vite config + the four Figma Make plugins
+├── package.json              # "figma-make-app", scripts: dev/build/size/preview/format/fetch-models
+├── tsconfig.json             # strict TS, jsx: react-jsx, @/* alias + preact/compat remaps
+├── vite.config.ts            # Vite config + the Figma Make plugins
 ├── .vscode/mcp.json          # Figma MCP server registration (HTTP)
 ├── .figma/make/site.json     # site metadata applied to the HTML shell
-├── agents-figma.md           # port plan + phase log against the Figma Make upstream
+├── public/
+│   ├── _headers              # COOP/COEP isolation headers (GitHub Pages)
+│   └── sw.js                 # caches the hashed ORT wasm + worker bundle (prod)
+├── scripts/                  # fetch-models.mjs, quantize-models.py, size-report.mjs
 ├── plans/                    # upstream Figma Make design docs (ported verbatim)
 ├── qa/
-│   └── playwright-qa.mjs     # automated §8 QA matrix (headless Chromium; not a dep)
+│   └── playwright-qa.mjs     # automated QA matrix (headless Chromium; not a dep)
 ├── dist/                     # build output (generated; do not hand-edit)
 ├── ipynb/                    # unrelated Kazakh statistics coursework (ignore)
 └── src/
-    ├── main.tsx              # React root; I18nProvider + ./index.css
-    ├── App.tsx               # shell: state, composition, lazy scanner dialog (exports LoadState)
+    ├── main.tsx              # Preact root; I18nProvider, service-worker registration
+    ├── App.tsx               # shell: state, composition, lazy scanner + archive (exports LoadState)
     ├── index.css             # tokens (@theme), globals, component classes
     ├── vite-env.d.ts         # /// <reference types="vite/client" />
     ├── components/           # one component per file (layout chrome + primitives)

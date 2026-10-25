@@ -1,6 +1,6 @@
 // Automated QA pass for the Warranty Keeper port.
 //
-// Covers the interactive matrix in agents-figma.md §8 with a headless
+// Covers the interactive QA matrix with a headless
 // Chromium: register states, filters, views, archive ledger/drawer/closet,
 // i18n (EN/RU/KK), responsive overflow, the DEMO fault injector and the whole
 // on-device OCR flow (upload, paste, camera, retake, save, save failure).
