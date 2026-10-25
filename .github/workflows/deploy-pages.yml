@@ -30,8 +30,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install model packer
+        run: pip install onnx==1.23.2 numpy==2.5.4
+
       - name: Download OCR models
-        run: npm run fetch-models
+        run: npm run fetch-models -- --pack
 
       - name: Build
         run: npm run build

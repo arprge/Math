@@ -281,10 +281,15 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
   `parseReceipt.ts` (text → receipt fields), `dict.ts` (charset),
   `RegisterDialog.tsx` (camera/upload UI), `ocr.ts` (main-thread client +
   `warmReader()` warm-up).
-- The tiny tier keeps the reader ~6.2 MB and several times faster than PP-OCRv5
-  mobile while matching it on clean receipt lines. `dict.ts` is the model's
-  ASCII/Latin/symbol prefix (616 of 6 905 classes); the CTC decoder skips the
-  CJK/fullwidth tail because this reader only targets Latin-script receipts.
+- The tiny tier is packed on setup: `scripts/quantize-models.py` slices the 6 906-class
+  classifier to the 617 classes `dict.ts` actually decodes and stores Conv/MatMul
+  weights as per-channel int8, taking the pair from 6.2 MB to ~1.2 MB. Softmax
+  renormalises but keeps the ordering, so decoded text is unchanged; inference is
+  slightly faster because the classifier is smaller. Full int8 QDQ (activations too)
+  was measured ~40% slower on the WASM backend and is not used.
+- `dict.ts` is the model's ASCII/Latin/symbol prefix (616 of 6 905 classes); the CTC
+  decoder skips the CJK/fullwidth tail because this reader only targets Latin-script
+  receipts. `KEEP_CLASSES` in the packer must stay in sync with its length.
 - Runtime is `onnxruntime-web` with **WebGPU first, WASM fallback**; the two
   models are imported from [`src/scan/models/`](src/scan/models) with `?url` (bundled,
   not fetched from a CDN at build time). That directory is **gitignored** — run
@@ -292,7 +297,15 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
   HuggingFace mirror as a second URL in case the bundled asset can't be read.
 - **Setup:** `npm install` → `npm run fetch-models` → `npm run dev` / `npm run build`.
 - The scanner is lazy-loaded: `App.tsx` imports `./scan/RegisterDialog` on first
-  intent (hover/focus of Register) or on open, and pre-warms the reader.
+  intent (hover/focus of Register) or on open, and pre-warms the reader. The same
+  warm-up also runs in the first idle slot after load (skipped when the browser
+  reports `saveData` or a 2G connection), so the engine is usually compiled
+  before the dialog opens.
+- `public/sw.js` caches the hashed ORT `.wasm` and worker bundle cache-first:
+  GitHub Pages only sends `Cache-Control: max-age=600`, which would otherwise
+  revalidate the ~14 MB runtime on every visit. Model weights stay in the
+  worker's own `wk-ocr-v2` Cache API bucket; `navigator.storage.persist()` asks
+  the browser not to evict them. Registration is production-only.
 - Keep the pipeline client-side; do not move inference to a server.
 
 ### 3.6 QA harness (headless Chromium)
@@ -321,11 +334,12 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
 - **Fonts** are loaded from the **Google Fonts CDN** via `@import` at the top of
   `src/index.css` (Archivo, Inter, JetBrains Mono).
 - **The only binary assets** are the two OCR models used by the scanner
-  (`ppocrv6-tiny-det.onnx` ~1.8 MB, `ppocrv6-tiny-rec.onnx` ~4.5 MB).
+  (`ppocrv6-tiny-det.onnx` ~0.5 MB, `ppocrv6-tiny-rec.onnx` ~0.66 MB after packing).
   They live in `src/scan/models/`, are **gitignored**, and are imported with `?url`
   from `ocr.worker.ts` (emitted to `dist/assets/`). Run **`npm run fetch-models`**
-  after cloning — it downloads them from the PaddlePaddle HuggingFace repos and
-  verifies size + sha256 (`-- --check` verifies without downloading). There is
+  after cloning — it downloads them from the PaddlePaddle HuggingFace repos, verifies
+  size + sha256 and packs them with `scripts/quantize-models.py` (`-- --check`
+  verifies without downloading, `-- --pack` requires packing). There is
   still no `public/`, `src/assets`, or committed image/video/font.
 - **Graphics** are generated in code, not imported:
   - the receipt torn edge is an inline `<svg>` path (`src/components/MoneyStat.tsx`),

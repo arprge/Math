@@ -57,9 +57,18 @@ npm run dev
 
 Open <http://localhost:8443>.
 
-The OCR models are not stored in the repository, so `npm run fetch-models` downloads and
-verifies them (~6.2 MB) on first setup. The app itself runs without them; only receipt
-scanning needs the models.
+The OCR models are not stored in the repository, so `npm run fetch-models` downloads,
+verifies and packs them (~1.2 MB) on first setup. The app itself runs without them; only
+receipt scanning needs the models. Packing uses `onnx` + `numpy`
+(`pip install onnx==1.23.2 numpy==2.5.4`); without them the float32 models still work,
+they are just ~5x larger.
+
+On the deployed site nothing has to be downloaded or uploaded by hand: GitHub Pages
+serves the runtime and the models, and the browser keeps both on the device. The first
+scan is a one-time ~5 MB transfer (about 3.7 MB gzipped runtime + 1.2 MB models); after
+that it starts instantly and works offline. A service worker stops GitHub Pages' short
+`max-age=600` from re-fetching the runtime, and pre-warming starts the download during
+the first idle moment on the page.
 
 ### Scripts
 
@@ -69,7 +78,8 @@ scanning needs the models.
 | `npm run build` | Build the production bundle into `dist/`. |
 | `npm run size` | Build and print JavaScript/CSS bundle sizes by file. |
 | `npm run preview` | Serve the production build locally. |
-| `npm run fetch-models` | Download and verify the OCR models. |
+| `npm run fetch-models` | Download, verify and pack the OCR models. |
+| `npm run quantize-models` | Prune + int8-pack the models already on disk. |
 | `npm run format` | Format changed files with oxfmt. |
 
 ### Configuration

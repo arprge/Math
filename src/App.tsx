@@ -67,6 +67,23 @@ export default function App() {
     return () => clearTimeout(t)
   }, [printed])
 
+  // Pull the reader down while the browser is idle, so the first scan starts
+  // on an already-compiled engine. Skipped on metered/slow connections.
+  useEffect(() => {
+    const connection = (navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string }
+    }).connection
+    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType ?? "")) return
+
+    const warm = () => warmReader({ speculative: true })
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(warm, { timeout: 3000 })
+      return () => window.cancelIdleCallback(id)
+    }
+    const id = window.setTimeout(warm, 2000)
+    return () => window.clearTimeout(id)
+  }, [])
+
   const addItem = async (draft: ItemDraft) => {
     const saved = await saveItem(draft)
     setItems((s) => [...s, saved])

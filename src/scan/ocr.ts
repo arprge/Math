@@ -40,6 +40,9 @@ function setStatus(next: ReaderStatus) {
 
 function boot(): Worker {
   if (worker) return worker
+  // Keep the cached runtime/models when the device runs low on space.
+  const storage = navigator.storage
+  storage?.persisted?.().then((kept) => (kept ? undefined : storage.persist())).catch(() => {})
   const w = new Worker(new URL("./ocr.worker.ts", import.meta.url), { type: "module", name: "receipt-reader" })
   w.onmessage = (e: MessageEvent<FromWorker>) => {
     const m = e.data
