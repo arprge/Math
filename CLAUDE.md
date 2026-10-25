@@ -4,7 +4,7 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 **integrating Figma designs via the Figma MCP server**.
 
 > This project is a **Figma Make export** (`package.json` name: `figma-make-app`).
-> It is a single-page React 19 + Vite + Tailwind v4 app called **Warranty Keeper**.
+> It is a single-page Preact 11 compat + Vite + Tailwind v4 app called **Warranty Keeper**.
 > Keep it looking like it was produced by Figma Make: minimal dependencies,
 > no build config sprawl, Tailwind utilities for layout, and a small set of
 > hand-rolled component classes in `src/index.css`.
@@ -23,7 +23,7 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 | Concern | Answer |
 |---|---|
 | Language | TypeScript (strict), `.tsx` / `.ts` |
-| UI framework | React 19.3 (`react`, `react-dom`) — **no** router, **no** state lib |
+| UI framework | Preact 11 via `preact/compat` — **no** router, **no** state lib |
 | Styling | Tailwind CSS **v4** via `@tailwindcss/vite` (CSS-first config, **no `tailwind.config.js`**) |
 | Build | Vite 8 + `@vitejs/plugin-react`, Rolldown-based |
 | Package manager | npm (`package-lock.json`) |
@@ -33,7 +33,7 @@ Rules and conventions for AI agents working in this repo, with emphasis on
 | Components | `src/components/*` (primitives) + `src/pages/*` (Register, Archive) |
 | State | `useState`/`useMemo` in `src/App.tsx`; persistence via `src/domain/repo.ts` |
 | i18n | EN / RU / KK via `src/i18n` (`useI18n()`, dictionaries in `src/i18n/dict`) |
-| OCR | On-device PaddleOCR PP-OCRv5 via `onnxruntime-web` in a Web Worker (`src/scan`) |
+| OCR | On-device PaddleOCR PP-OCRv6 tiny via `onnxruntime-web` in a Web Worker (`src/scan`) |
 | Icons | None — inline SVG + Unicode glyphs only |
 | Assets | Google Fonts CDN; two `.onnx` models in `src/scan/models/` (gitignored — run `npm run fetch-models`) |
 | Alias | `@/*` → `./src/*` (configured in `tsconfig.json` + `vite.config.ts`; source uses relative imports) |
@@ -114,8 +114,8 @@ All design tokens live in one place: the `@theme` block at the top of
 
 ### 1.2 Token transformation systems
 
-**None.** There is no Style Dictionary, no theme switcher, no dark mode, and no
-runtime theming. Tokens are compile-time CSS variables emitted by Tailwind v4.
+**None.** Runtime theming is handled by `src/lib/theme.ts` and `ThemeSwitcher`;
+tokens are compile-time CSS variables emitted by Tailwind v4.
 If Figma variables/tokens need to be synced, translate them **by hand** into the
 `@theme` block (and note any new token in this file).
 
@@ -205,7 +205,7 @@ Helpers: `barcodesFrom(serial)` in [`src/lib/barcode.ts`](src/lib/barcode.ts) ge
 - No Storybook, no MDX, no doc comments beyond concise `//` header comments.
 - `vite.config.ts` registers four Figma Make plugins: `figmaSiteConfiguration`
   (applies `.figma/make/site.json` to the HTML shell + serves `robots.txt`),
-  `figmaErrorOverlayReplay`, `figmaReactRefreshBoundaryFallback`, and
+  `figmaErrorOverlayReplay`, and
   `figmaMakeKitPlugin` (dev-only route `/.figma/make/kit.html` exposing
   `window.__FIGMA__.stories` from `/src/**/*.stories.{ts,tsx,js,jsx}` — there are
   currently zero story files, so it simply renders an empty registry).
@@ -217,16 +217,15 @@ Helpers: `barcodesFrom(serial)` in [`src/lib/barcode.ts`](src/lib/barcode.ts) ge
 
 ### 3.1 UI framework
 
-React 19 with the automatic JSX runtime (`"jsx": "react-jsx"` in `tsconfig.json`).
-No routing, no data-fetching, no form library, no UI kit. The three dependencies
-are React, React DOM, and the on-device OCR runtime:
+Preact 11 through `preact/compat` with the automatic JSX runtime (`"jsx": "react-jsx"`
+in `tsconfig.json`). No routing, no data-fetching, no form library, no UI kit. The
+runtime dependencies are Preact and the on-device OCR runtime:
 
 ```jsonc
 // package.json
 "dependencies": {
   "onnxruntime-web": "^1.30.0",
-  "react": "^19.0.0",
-  "react-dom": "^19.0.0"
+  "preact": "^11.0.2"
 }
 ```
 
@@ -277,11 +276,15 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
 
 ### 3.5 On-device OCR (receipt scanner)
 
-- [`src/scan/`](src/scan) is the full PaddleOCR PP-OCRv5 pipeline, run in a Web
+- [`src/scan/`](src/scan) is the full PaddleOCR PP-OCRv6 tiny pipeline, run in a Web
   Worker: `ocr.worker.ts` (worker entry), `engine.ts` (det/rec + CTC decode),
   `parseReceipt.ts` (text → receipt fields), `dict.ts` (charset),
   `RegisterDialog.tsx` (camera/upload UI), `ocr.ts` (main-thread client +
   `warmReader()` warm-up).
+- The tiny tier keeps the reader ~6.2 MB and several times faster than PP-OCRv5
+  mobile while matching it on clean receipt lines. `dict.ts` is the model's
+  ASCII/Latin/symbol prefix (616 of 6 905 classes); the CTC decoder skips the
+  CJK/fullwidth tail because this reader only targets Latin-script receipts.
 - Runtime is `onnxruntime-web` with **WebGPU first, WASM fallback**; the two
   models are imported from [`src/scan/models/`](src/scan/models) with `?url` (bundled,
   not fetched from a CDN at build time). That directory is **gitignored** — run
@@ -318,7 +321,7 @@ classes are authored with `@layer`/plain CSS in `src/index.css` (see §6).
 - **Fonts** are loaded from the **Google Fonts CDN** via `@import` at the top of
   `src/index.css` (Archivo, Inter, JetBrains Mono).
 - **The only binary assets** are the two OCR models used by the scanner
-  (`ppocrv5-mobile-det.onnx` ~4.8 MB, `ppocrv5-mobile-rec-en.onnx` ~7.8 MB).
+  (`ppocrv6-tiny-det.onnx` ~1.8 MB, `ppocrv6-tiny-rec.onnx` ~4.5 MB).
   They live in `src/scan/models/`, are **gitignored**, and are imported with `?url`
   from `ocr.worker.ts` (emitted to `dist/assets/`). Run **`npm run fetch-models`**
   after cloning — it downloads them from the PaddlePaddle HuggingFace repos and
@@ -437,7 +440,7 @@ Math/                         # repo root (git repo)
     ├── scan/                 # on-device OCR receipt reader (Web Worker)
     │   ├── RegisterDialog.tsx
     │   ├── ocr.ts / ocr.worker.ts / engine.ts / parseReceipt.ts / dict.ts
-    │   └── models/           # vendored PP-OCRv5 .onnx models (det + rec-en)
+    │   └── models/           # vendored PP-OCRv6 tiny .onnx models (det + rec)
     ├── dev/
     │   └── StateDemo.tsx     # DEMO-only load-state trigger (remove with src/dev)
     ├── domain/               # pure domain model (no React)
@@ -537,11 +540,10 @@ The Figma MCP server is registered in [`.vscode/mcp.json`](.vscode/mcp.json):
 
 ### 8.4 Figma Make hosting hooks
 
-- `vite.config.ts` **is the upstream file verbatim** and registers all four Figma
-  Make plugins in `plugins`: `react()`, `tailwindcss()`,
+- `vite.config.ts` registers the Preact preset plus the Figma Make plugins in
+  `plugins`: `preact()`, `tailwindcss()`,
   `figmaSiteConfiguration(siteConfiguration)` (applies `.figma/make/site.json` to
   the HTML shell and serves `/robots.txt`), `figmaErrorOverlayReplay()`,
-  `figmaReactRefreshBoundaryFallback()`, and
   `figmaMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" })`
   (dev-only `/.figma/make/kit.html` route).
 - `.figma/make/site.json` drives the `<title>`, description, `robots` meta and

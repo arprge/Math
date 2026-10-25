@@ -24,6 +24,51 @@
   /* A whisper of ochre structure gives the white field a dry, tactile warmth. */
   --grid-line: rgba(125, 101, 53, 0.028);
   --grid-size: 26px;
+
+  /* Physical-layer tokens: lit edges, contact shadows and hover lifts.
+     Overridden in dark so the paper metaphor survives the inversion. */
+  --color-lift: #ffffff;
+  --color-scrim: rgba(37, 38, 42, 0.4);
+  --edge-lit: rgba(255, 255, 255, 0.96);
+  --edge-soft: rgba(255, 255, 255, 0.9);
+  --hairline: rgba(122, 101, 58, 0.055);
+  --contact: rgba(27, 42, 56, 0.1);
+  --contact-soft: rgba(92, 74, 40, 0.045);
+  --glow: rgba(255, 253, 245, 0.78);
+  --drop: rgba(27, 42, 56, 0.08);
+}
+
+/* Dark tokens are stamped on <html> by the theme switcher (AUTO resolves to
+   the OS preference), so there is no flash and no media-query duplication. */
+:root[data-theme="dark"] {
+  --color-paper: #131210;
+  --color-ink: #ece8df;
+  --color-line: #302d27;
+  --color-muted: #98948b;
+  --color-signal: #e0604a;
+  --color-warn: #e0a13c;
+  --color-ok: #4cb389;
+  --color-receipt: #1c1b17;
+
+  --grid-line: rgba(228, 207, 158, 0.032);
+
+  --color-lift: #24231f;
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --edge-lit: rgba(255, 255, 255, 0.06);
+  --edge-soft: rgba(255, 255, 255, 0.05);
+  --hairline: rgba(255, 255, 255, 0.07);
+  --contact: rgba(0, 0, 0, 0.55);
+  --contact-soft: rgba(0, 0, 0, 0.35);
+  --glow: rgba(255, 235, 195, 0.045);
+  --drop: rgba(0, 0, 0, 0.55);
+}
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 html,
@@ -42,8 +87,8 @@ body {
   background-image:
     radial-gradient(
       120% 90% at 20% -10%,
-      rgba(255, 253, 245, 0.78) 0%,
-      rgba(255, 253, 245, 0) 60%
+      var(--glow) 0%,
+      transparent 60%
     ),
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
@@ -79,18 +124,18 @@ body {
   display: flex;
   flex-direction: column;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.96),
-    0 0 0 1px rgba(122, 101, 58, 0.055),
-    0 1px 0 rgba(27, 42, 56, 0.1),
-    0 4px 9px rgba(92, 74, 40, 0.045);
+    inset 0 1px 0 var(--edge-lit),
+    0 0 0 1px var(--hairline),
+    0 1px 0 var(--contact),
+    0 4px 9px var(--contact-soft);
   transition: box-shadow 0.22s ease, transform 0.22s ease;
 }
 .receipt-card:hover {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 1),
-    0 0 0 1px rgba(122, 101, 58, 0.075),
-    0 1px 0 rgba(27, 42, 56, 0.12),
-    0 7px 14px rgba(92, 74, 40, 0.065);
+    inset 0 1px 0 var(--edge-lit),
+    0 0 0 1px var(--hairline),
+    0 1px 0 var(--contact),
+    0 7px 14px var(--contact-soft);
   transform: translateY(-2px);
 }
 
@@ -155,22 +200,22 @@ body {
    Hairlines carry structure; depth only confirms what is paper. */
 .soft-raised {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 1px 2px rgba(92, 74, 40, 0.05);
+    inset 0 1px 0 var(--edge-soft),
+    0 1px 2px var(--contact-soft);
 }
 .soft-key {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 var(--edge-soft);
   transition-property: box-shadow, color, background-color;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
 .soft-key:hover {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 1),
-    0 1px 2px rgba(92, 74, 40, 0.06);
+    inset 0 1px 0 var(--edge-lit),
+    0 1px 2px var(--contact-soft);
 }
 .soft-key:active {
-  box-shadow: inset 0 1px 2px rgba(92, 74, 40, 0.08);
+  box-shadow: inset 0 1px 2px var(--contact-soft);
 }
 .soft-pressed {
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
@@ -179,9 +224,9 @@ body {
 /* Archive slip: the one physical object on the ledger page. */
 .archive-slip {
   box-shadow:
-    0 0 0 1px rgba(122, 101, 58, 0.06),
-    0 1px 1px rgba(92, 74, 40, 0.06),
-    0 10px 24px -14px rgba(92, 74, 40, 0.22);
+    0 0 0 1px var(--hairline),
+    0 1px 1px var(--contact-soft),
+    0 10px 24px -14px var(--contact);
 }
 
 /* Async states — quiet by design: blank paper while loading, a printer-feed
@@ -207,10 +252,10 @@ body {
 .receipt-card.is-blank:hover {
   transform: none;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.96),
-    0 0 0 1px rgba(122, 101, 58, 0.055),
-    0 1px 0 rgba(27, 42, 56, 0.1),
-    0 4px 9px rgba(92, 74, 40, 0.045);
+    inset 0 1px 0 var(--edge-lit),
+    0 0 0 1px var(--hairline),
+    0 1px 0 var(--contact),
+    0 4px 9px var(--contact-soft);
 }
 
 /* New record feeds out of the printer, top edge first. */
@@ -258,7 +303,7 @@ body {
   right: 0;
   height: 2px;
   background: var(--color-signal);
-  box-shadow: 0 0 14px 3px rgba(219, 68, 51, 0.4);
+  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--color-signal) 40%, transparent);
   animation: scanSweep 1.3s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
 }
 @keyframes quadIn {

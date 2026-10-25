@@ -21,7 +21,7 @@ export default function MoneyStat({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="group w-full px-5 py-6 text-left transition-colors hover:bg-white"
+        className="group w-full px-5 py-6 text-left transition-colors hover:bg-lift"
       >
         <div className="flex items-center gap-1.5">
           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
@@ -52,7 +52,7 @@ export default function MoneyStat({
           <div
             role="dialog"
             aria-label={t("breakdown.dialog")}
-            className="absolute right-3 top-[calc(100%-6px)] z-50 w-[min(320px,calc(100vw-2rem))] origin-top-right animate-[moneyPop_120ms_ease-out] border-t border-x border-ink bg-paper shadow-[2px_3px_0_rgba(27,42,56,0.08),0_8px_18px_rgba(27,42,56,0.05)]"
+            className="absolute right-3 top-[calc(100%-6px)] z-50 w-[min(320px,calc(100vw-2rem))] origin-top-right animate-[moneyPop_120ms_ease-out] border-t border-x border-ink bg-paper shadow-[2px_3px_0_var(--drop),0_8px_18px_var(--drop)]"
           >
             {/* caret */}
             <div className="absolute -top-[5px] right-6 h-2.5 w-2.5 rotate-45 border-l border-t border-ink bg-paper" />

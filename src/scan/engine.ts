@@ -1,4 +1,4 @@
-// PP-OCRv5 pre/post-processing as pure functions over typed arrays.
+// PP-OCRv6 pre/post-processing as pure functions over typed arrays.
 // No DOM and no onnxruntime import: the worker moves tensors in and out
 // through `Infer`, which keeps this file testable outside a browser.
 
@@ -34,9 +34,10 @@ export type Line = {
 
 export type OcrResult = { lines: Line[]; quads: Quad[] }
 
-const DET_THRESH = 0.3
-const BOX_THRESH = 0.6
-const UNCLIP_RATIO = 1.5
+// PP-OCRv6's DB head ships with a slightly softer threshold than v5.
+const DET_THRESH = 0.2
+const BOX_THRESH = 0.45
+const UNCLIP_RATIO = 1.4
 const REC_H = 48
 const REC_MIN_W = 160
 const REC_MAX_W = 2400
@@ -317,8 +318,10 @@ async function readRegions(src: Raster, regions: Region[], infer: Infer, dict: s
             best = c
           }
         }
-        if (best !== 0 && best !== prev) {
-          text += best <= dict.length ? dict[best - 1] : " "
+        // Classes outside the vendored Latin prefix are multilingual tail
+        // entries; drop them rather than injecting a space into the line.
+        if (best !== 0 && best !== prev && best <= dict.length) {
+          text += dict[best - 1]
           sum += bp
           count++
         }

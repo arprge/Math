@@ -155,7 +155,7 @@ export default function RegisterPage({
             onPointerEnter={onPrepare}
             onFocus={onPrepare}
             disabled={!ready}
-            className="font-mono text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 bg-signal text-white hover:bg-ink transition-colors whitespace-nowrap disabled:opacity-40 disabled:hover:bg-signal"
+            className="font-mono text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 bg-signal text-white hover:bg-ink hover:text-paper transition-colors whitespace-nowrap disabled:opacity-40 disabled:hover:bg-signal disabled:hover:text-white"
           >
             + <span className="hidden sm:inline">{t("controls.register")}</span>
             <span className="sm:hidden">{t("controls.add")}</span>
@@ -182,7 +182,7 @@ export default function RegisterPage({
             {visible.map(({ it, days, status, expiry }) => (
               <li
                 key={it.id}
-                className={`group grid md:grid-cols-[1fr_auto_auto_auto] gap-2 md:gap-6 items-center px-4 py-3.5 border-b border-line last:border-b-0 hover:bg-white transition-colors ${
+                className={`group grid md:grid-cols-[1fr_auto_auto_auto] gap-2 md:gap-6 items-center px-4 py-3.5 border-b border-line last:border-b-0 hover:bg-lift transition-colors ${
                   printed?.id === it.id ? "print-in" : ""
                 }`}
               >

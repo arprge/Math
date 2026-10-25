@@ -1,16 +1,17 @@
-// Fetches the PP-OCRv5 models used by the receipt scanner.
+// Fetches the PP-OCRv6 tiny models used by the receipt scanner.
 //
-// The `.onnx` files are ~12.7 MB total and are intentionally NOT committed
+// The `.onnx` files are ~6.2 MB total and are intentionally NOT committed
 // (see .gitignore and CLAUDE.md §4). Run this once after cloning:
 //
 //   npm run fetch-models            # download anything missing/invalid
 //   npm run fetch-models -- --check  # verify only (exit 1 if a model is absent)
 //
 // Sources are the PaddlePaddle HuggingFace repos that `src/scan/ocr.worker.ts`
-// also falls back to at runtime.
+// also falls back to at runtime. Revisions are pinned so the checksums stay
+// reproducible.
 
 import { createHash } from "node:crypto"
-import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises"
+import { mkdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -19,18 +20,21 @@ const HF = "https://huggingface.co/PaddlePaddle"
 
 const MODELS = [
   {
-    file: "ppocrv5-mobile-det.onnx",
-    url: `${HF}/PP-OCRv5_mobile_det_onnx/resolve/main/inference.onnx`,
-    bytes: 4_826_518,
-    sha256: "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
+    file: "ppocrv6-tiny-det.onnx",
+    url: `${HF}/PP-OCRv6_tiny_det_onnx/resolve/2ba1506c0380b8f0b03dd142459aac66d4421f6c/inference.onnx`,
+    bytes: 1_780_590,
+    sha256: "193bab7a04fca699a6c82e6abb5b81bdb28177f0abd4062552b04908dafb19f8",
   },
   {
-    file: "ppocrv5-mobile-rec-en.onnx",
-    url: `${HF}/en_PP-OCRv5_mobile_rec_onnx/resolve/main/inference.onnx`,
-    bytes: 7_848_423,
-    sha256: "b5f833dfc5d0eb71da397b4efa06ebeee9b431b690a47d6af40d77d8eabc557f",
+    file: "ppocrv6-tiny-rec.onnx",
+    url: `${HF}/PP-OCRv6_tiny_rec_onnx/resolve/2612ab37152ae0a677521bae4e1e3d4fb4cf7c30/inference.onnx`,
+    bytes: 4_462_639,
+    sha256: "9ef676d6ed3c88256a2d92c640c44f25b0c40947e111b14b8be8f594091563e6",
   },
 ]
+
+// Models from the PP-OCRv5 reader; remove them once the v6 set is verified.
+const LEGACY = ["ppocrv5-mobile-det.onnx", "ppocrv5-mobile-rec-en.onnx"]
 
 const checkOnly = process.argv.includes("--check")
 const targetDir = join(ROOT, "src", "scan", "models")
@@ -89,3 +93,10 @@ for (const model of MODELS) {
 }
 
 if (failed) process.exit(1)
+
+// The v6 pair is complete now, so stale v5 files would only be dead weight.
+if (!checkOnly) {
+  for (const file of LEGACY) {
+    await unlink(join(targetDir, file)).catch(() => {})
+  }
+}

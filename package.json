@@ -6,20 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "size": "npm run build && node scripts/size-report.mjs",
     "preview": "vite preview",
     "format": "oxfmt",
     "fetch-models": "node scripts/fetch-models.mjs"
   },
   "dependencies": {
     "onnxruntime-web": "^1.30.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "preact": "^11.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.0",
+    "@preact/preset-vite": "^2.10.6",
     "tailwindcss": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "oxfmt": "^0.2.0",

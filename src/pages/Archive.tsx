@@ -1,11 +1,11 @@
 import {
-  type KeyboardEvent as ReactKeyboardEvent,
   useEffect,
   useDeferredValue,
   useMemo,
   useRef,
   useState,
 } from "react"
+import type { TargetedKeyboardEvent } from "preact"
 
 import { type EnrichedItem, groupByMonth } from "../domain/warranty"
 import { useI18n } from "../i18n"
@@ -316,7 +316,7 @@ export default function ArchivePage({
     return () => window.removeEventListener("keydown", onKey)
   }, [selectedId])
 
-  const onRowKey = (e: ReactKeyboardEvent, index: number) => {
+  const onRowKey = (e: TargetedKeyboardEvent<HTMLElement>, index: number) => {
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return
     e.preventDefault()
     const next = entries[index + (e.key === "ArrowDown" ? 1 : -1)]
@@ -326,7 +326,7 @@ export default function ArchivePage({
   }
 
   // Arrow keys walk the boxes in shelf order, skipping empty ones.
-  const onShelfKey = (e: ReactKeyboardEvent) => {
+  const onShelfKey = (e: TargetedKeyboardEvent<HTMLElement>) => {
     const dir =
       e.key === "ArrowRight" || e.key === "ArrowDown"
         ? 1
@@ -380,7 +380,7 @@ export default function ArchivePage({
               ref={searchRef}
               value={query}
               disabled={!ready}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => setQuery(e.currentTarget.value)}
               placeholder={t("archive.placeholder")}
               className="min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-muted focus:outline-none disabled:cursor-default sm:text-sm"
             />
@@ -412,15 +412,15 @@ export default function ArchivePage({
                     disabled={!ready}
                     aria-pressed={active}
                     className={`whitespace-nowrap border-b pb-0.5 transition-colors ${active
-                        ? "border-ink text-ink"
-                        : "border-transparent text-muted hover:text-ink"
+                      ? "border-ink text-ink"
+                      : "border-transparent text-muted hover:text-ink"
                       }`}
                   >
                     {t(`archive.filter.${f}`)}{" "}
                     <span
                       className={`tabular-nums ${ready && f === "missing" && counts.missing > 0
-                          ? "text-signal"
-                          : "opacity-60"
+                        ? "text-signal"
+                        : "opacity-60"
                         }`}
                     >
                       {ready ? counts[f] : "–"}
@@ -561,8 +561,8 @@ export default function ArchivePage({
                           onKeyDown={(ev) => onRowKey(ev, index)}
                           aria-pressed={active}
                           className={`grid w-full grid-cols-[2rem_1fr_auto] items-baseline gap-3 py-3 pr-1 text-left transition-[padding] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:grid-cols-[2.5rem_1fr_auto] sm:gap-5 ${active
-                              ? "pl-3 shadow-[inset_2px_0_0_var(--color-ink)]"
-                              : "pl-0 hover:pl-1.5"
+                            ? "pl-3 shadow-[inset_2px_0_0_var(--color-ink)]"
+                            : "pl-0 hover:pl-1.5"
                             }`}
                         >
                           <span className="font-mono text-[11px] tabular-nums text-muted">
@@ -613,7 +613,7 @@ export default function ArchivePage({
               <button
                 aria-label={t("archive.closePreview")}
                 onClick={() => setSelectedId(null)}
-                className="fixed inset-0 z-40 bg-ink/30 md:hidden"
+                className="fixed inset-0 z-40 bg-scrim md:hidden"
               />
               <aside
                 aria-label={t("archive.preview")}

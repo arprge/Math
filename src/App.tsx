@@ -9,7 +9,6 @@ import {
 import { type ItemDraft, loadItems, saveItem } from "./domain/repo"
 import Header, { type Page } from "./components/Header"
 import Footer from "./components/Footer"
-import ArchivePage from "./pages/Archive"
 import RegisterPage, { type Filter, type ViewMode } from "./pages/Register"
 import { warmReader } from "./scan/ocr"
 import { useI18n } from "./i18n"
@@ -22,6 +21,9 @@ const prepareRegister = () => {
   loadRegisterDialog()
   warmReader({ speculative: true })
 }
+
+const loadArchivePage = () => import("./pages/Archive")
+const ArchivePage = lazy(loadArchivePage)
 
 export type LoadState =
   | { status: "loading" }
@@ -101,10 +103,18 @@ export default function App() {
 
   return (
     <div className="min-h-full font-body text-ink">
-      <Header page={page} setPage={setPage} onReload={fetchItems} meta={meta} />
+      <Header
+        page={page}
+        setPage={setPage}
+        onPrepareArchive={loadArchivePage}
+        onReload={fetchItems}
+        meta={meta}
+      />
 
       {page === "archive" && (
-        <ArchivePage enriched={enriched} load={load} onRetry={fetchItems} />
+        <Suspense fallback={null}>
+          <ArchivePage enriched={enriched} load={load} onRetry={fetchItems} />
+        </Suspense>
       )}
 
       {page === "register" && (
