@@ -56,7 +56,7 @@ export default function RegisterPage({
   const { t, fmt } = useI18n()
 
   return (
-    <main className="mx-auto max-w-6xl px-6 pt-8 pb-6 sm:pt-6">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-6 pt-8 pb-6 sm:pt-6 focus:outline-none">
       {/* Stat band — tighter padding */}
       <section className="grid grid-cols-2 lg:grid-cols-4 border border-line mb-8 bg-receipt soft-raised">
         <Stat

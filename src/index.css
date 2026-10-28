@@ -340,4 +340,27 @@ body {
   .scan-sweep {
     display: none;
   }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Fallback focus ring for controls that opt out of the browser default.
+   Zero specificity, so component styles still win. */
+@layer base {
+  :where(a, button, [role="button"], input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
+/* Stronger hairlines and secondary text when the OS asks for more contrast. */
+@media (prefers-contrast: more) {
+  :root {
+    --color-muted: #5d5f66;
+    --color-line: #cfc9bc;
+  }
 }

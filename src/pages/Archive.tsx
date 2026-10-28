@@ -360,7 +360,7 @@ export default function ArchivePage({
   const groupLabel = (key: string) => fmt.upper(`${fmt.month(key)} ${key.slice(0, 4)}`)
 
   return (
-    <main className="mx-auto max-w-6xl px-6 pt-8 pb-16 sm:pt-10">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-6 pt-8 pb-16 sm:pt-10 focus:outline-none">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="contents">
           <label className="flex items-center gap-3 w-full rounded-[3px] border border-ink/70 bg-receipt px-3.5 sm:w-96 py-2.5 focus-within:border-ink focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink">

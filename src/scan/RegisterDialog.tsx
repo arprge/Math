@@ -8,6 +8,7 @@ import type { Quad } from "./engine"
 import type { Guess } from "./parseReceipt"
 import { readerStatus, scanReceipt, subscribeReader, warmReader } from "./ocr"
 import { useI18n } from "../i18n"
+import { useFocusTrap } from "../lib/useFocusTrap"
 
 type Conf = Guess["conf"]
 type Notice = "unsupported" | "noText" | "notReceipt" | "readFailed" | "readerDownload"
@@ -188,6 +189,7 @@ export default function RegisterDialog({
   }
 
   const wide = step.kind === "review"
+  const trapRef = useFocusTrap<HTMLDivElement>()
 
   return (
     <div
@@ -195,9 +197,11 @@ export default function RegisterDialog({
       onClick={dismiss}
     >
       <div
+        ref={trapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="register-title"
+        tabIndex={-1}
         className={`relative my-8 w-full border border-ink bg-paper p-5 sm:p-6 ${wide ? "max-w-3xl" : "max-w-lg"}`}
         onClick={(e) => e.stopPropagation()}
         onDragOver={(e) => {
@@ -233,6 +237,7 @@ export default function RegisterDialog({
           </button>
         </div>
 
+        <p className="sr-only" role="status" aria-live="polite">{step.kind === "review" ? t("a11y.scanDone") : ""}</p>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
         <input
           ref={systemCamRef}
@@ -301,6 +306,10 @@ export default function RegisterDialog({
                       value={form.product}
                       onChange={(e) => set("product", e.currentTarget.value)}
                       placeholder={t("scan.field.productPlaceholder")}
+                      required
+                      aria-required="true"
+                      aria-invalid={error?.kind === "productRequired" || undefined}
+                      aria-describedby={error?.kind === "productRequired" ? "register-error" : undefined}
                     />
                   )}
                 </Field>
@@ -324,6 +333,8 @@ export default function RegisterDialog({
                       className={`${cls} font-mono`}
                       value={form.serial}
                       onChange={(e) => set("serial", e.currentTarget.value)}
+                      autoComplete="off"
+                      spellcheck={false}
                     />
                   )}
                 </Field>
@@ -370,7 +381,7 @@ export default function RegisterDialog({
 
             <div aria-live="polite">
               {errorText && (
-                <p className="meta-in mt-5 flex items-start gap-2 border-t border-line pt-3 font-mono text-[10px] leading-snug text-signal">
+                <p id="register-error" className="meta-in mt-5 flex items-start gap-2 border-t border-line pt-3 font-mono text-[10px] leading-snug text-signal">
                   <span aria-hidden>✗</span>
                   <span>{errorText}</span>
                 </p>
@@ -497,7 +508,7 @@ function Tile({
       type="button"
       onClick={onClick}
       autoFocus={autoFocus}
-      className="group flex aspect-[4/3.4] flex-col justify-between border border-line bg-receipt p-4 text-left soft-key transition-colors hover:border-ink focus-visible:border-ink focus-visible:outline-none sm:aspect-[4/3]"
+      className="group flex aspect-[4/3.4] flex-col justify-between border border-line bg-receipt p-4 text-left soft-key transition-colors hover:border-ink focus-visible:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:aspect-[4/3]"
     >
       <div className="flex items-start justify-between">
         <span className="text-ink transition-colors group-hover:text-signal">{icon}</span>
@@ -524,7 +535,7 @@ function Field({
 }) {
   const { t } = useI18n()
   const check = conf !== undefined && conf < 0.6
-  const cls = `w-full bg-paper border px-3 py-2 font-body text-sm focus:outline-none focus:border-ink transition-colors ${check ? "border-warn/60" : "border-line"
+  const cls = `w-full bg-paper border px-3 py-2 font-body text-sm focus:outline-none focus:border-ink focus-visible:outline-1 focus-visible:outline-ink transition-colors ${check ? "border-warn/60" : "border-line"
     }`
   return (
     <label className={`block ${className}`}>
@@ -681,7 +692,7 @@ function CameraView({
       .catch(() => setTorch(null))
   }
 
-  const bar = "font-mono text-[10px] uppercase tracking-[0.18em] text-white/80 hover:text-white"
+  const bar = "font-mono text-[10px] uppercase tracking-[0.18em] text-white/80 hover:text-white focus-visible:outline-white"
 
   return (
     <div className="relative aspect-[3/4] max-h-[70vh] w-full overflow-hidden bg-black max-sm:fixed max-sm:inset-0 max-sm:z-[60] max-sm:aspect-auto max-sm:max-h-none">
@@ -713,10 +724,10 @@ function CameraView({
             {state === "blocked" ? t("scan.cam.blockedHint") : t("scan.cam.unavailableHint")}
           </p>
           <div className="mt-2 flex flex-wrap justify-center gap-2">
-            <button type="button" onClick={onSystemCamera} className="bg-signal px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white hover:bg-white hover:text-black">
+            <button type="button" onClick={onSystemCamera} className="bg-signal px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white hover:bg-white hover:text-black focus-visible:outline-white">
               {t("scan.cam.cameraApp")}
             </button>
-            <button type="button" onClick={onUpload} className="border border-white/40 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white hover:border-white">
+            <button type="button" onClick={onUpload} className="border border-white/40 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-white hover:border-white focus-visible:outline-white">
               {t("scan.cam.upload")}
             </button>
           </div>

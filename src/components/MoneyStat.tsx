@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useId, useState } from "react"
 
 import { useI18n } from "../i18n"
+import { useFocusTrap } from "../lib/useFocusTrap"
 import type { PriceStats } from "../stats"
 
 /** Value-covered cell with a torn-edge breakdown popover. */
@@ -13,6 +14,8 @@ export default function MoneyStat({
 }) {
   const { t, fmt } = useI18n()
   const [open, setOpen] = useState(false)
+  const titleId = useId()
+  const popRef = useFocusTrap<HTMLDivElement>(open, () => setOpen(false))
   const highRisk = stats.clusterP >= 0.5
 
   return (
@@ -50,8 +53,11 @@ export default function MoneyStat({
           />
           {/* popover — thermal-ticket voice, anchored near the value */}
           <div
+            ref={popRef}
             role="dialog"
-            aria-label={t("breakdown.dialog")}
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             className="absolute right-3 top-[calc(100%-6px)] z-50 w-[min(320px,calc(100vw-2rem))] origin-top-right animate-[moneyPop_120ms_ease-out] border-t border-x border-ink bg-paper shadow-[2px_3px_0_var(--drop),0_8px_18px_var(--drop)]"
           >
             {/* caret */}
@@ -62,7 +68,7 @@ export default function MoneyStat({
 
             <div className="px-4 pb-4 pt-3">
               <div className="mb-3 flex items-baseline justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink">
+                <span id={titleId} className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink">
                   {t("breakdown.title")}
                 </span>
                 <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted">

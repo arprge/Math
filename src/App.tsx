@@ -120,6 +120,7 @@ export default function App() {
 
   return (
     <div className="min-h-full font-body text-ink">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:bg-ink focus:px-3 focus:py-2 focus:font-mono focus:text-[11px] focus:uppercase focus:tracking-[0.15em] focus:text-paper">{t("a11y.skipToContent")}</a>
       <Header
         page={page}
         setPage={setPage}

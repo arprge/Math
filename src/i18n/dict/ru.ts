@@ -3,6 +3,10 @@ import type { Dict } from "./en"
 export default {
   nav: { register: "Реестр", archive: "Архив" },
   lang: { label: "Язык" },
+  a11y: {
+    scanDone: "Чек прочитан. Проверьте выделенные поля.",
+    skipToContent: "Перейти к содержимому",
+  },
   theme: { label: "Тема", auto: "Авто", light: "Светлая", dark: "Тёмная" },
   meta: {
     loading: "Читаем файл…",
